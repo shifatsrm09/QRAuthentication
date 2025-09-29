@@ -102,6 +102,3 @@ npm run build
 
 Licensed under the **MIT License** — free to use, modify, and distribute.
 
----
-
-✨ Built with passion by **Shifat Rahman**
