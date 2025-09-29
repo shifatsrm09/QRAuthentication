@@ -1,5 +1,7 @@
 # 🔐 QR Authentication System
 
+
+
 <div align="center">
 
 ![QR Authentication](https://img.shields.io/badge/QR-Authentication-blue?style=for-the-badge\&logo=qrcode\&logoColor=white)
