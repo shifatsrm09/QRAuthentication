@@ -48,41 +48,54 @@ exports.checkStatus = async (req, res) => {
 };
 
 // Confirm QR Login
+// Confirm QR Login
 exports.confirmQR = async (req, res) => {
   const { sessionId } = req.body;
   const token = req.headers.authorization?.split(" ")[1];
 
-  if (!token) return res.status(401).json({ msg: "No token, mobile not authenticated" });
+  console.log("🔐 CONFIRM QR DEBUG:");
+  console.log("Session ID:", sessionId);
+  console.log("Token received:", token ? "YES" : "NO");
+
+  if (!token) {
+    return res.status(401).json({ msg: "No authentication token provided" });
+  }
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     const session = await QRSession.findOne({ sessionId });
 
-    if (!session) return res.status(404).json({ msg: "QR session not found or expired" });
+    if (!session) {
+      return res.status(404).json({ msg: "QR session not found or expired" });
+    }
 
+    console.log("User ID from token:", decoded.id);
+    
     // Link mobile user to session
     session.userId = decoded.id;
     session.status = "authenticated";
     await session.save();
+
+    console.log("✅ QR Session confirmed for user:", decoded.id);
 
     res.json({
       msg: "Login confirmed successfully!",
       user: { id: decoded.id }
     });
   } catch (err) {
+    console.error("Confirm QR error:", err);
     res.status(500).json({ msg: "Server error: " + err.message });
   }
 };
-
 // Mobile scan page
-// Mobile scan page - IMPROVED VERSION
-// Mobile scan page - SMART DETECTION
+// Mobile scan page - WORKING VERSION
+// Mobile scan page - WORKING VERSION
+// Mobile scan page - WORKING VERSION
 exports.scanPage = async (req, res) => {
   const { sessionId } = req.query;
   
   console.log("🔍 SCAN PAGE DEBUG INFO:");
   console.log("Session ID:", sessionId);
-  console.log("Request headers:", req.headers);
   
   try {
     const session = await QRSession.findOne({ sessionId });
@@ -94,9 +107,6 @@ exports.scanPage = async (req, res) => {
           <body style="background: #1a1a1a; color: white; text-align: center; padding: 50px; font-family: Arial;">
             <h2>QR Expired</h2>
             <p>This QR code has expired. Please generate a new one on your desktop.</p>
-            <div style="margin-top: 20px; font-size: 12px; opacity: 0.7;">
-              Debug: Session ${sessionId} not found
-            </div>
           </body>
         </html>
       `);
@@ -113,7 +123,6 @@ exports.scanPage = async (req, res) => {
       `);
     }
 
-    // Show login instructions with option to check if already logged in
     res.send(`
       <html>
       <head>
@@ -138,95 +147,147 @@ exports.scanPage = async (req, res) => {
             margin: 10px; 
           }
           .btn:hover { background: #0056b3; }
-          .btn-check { background: #28a745; }
-          .btn-check:hover { background: #218838; }
-          .debug-info {
-            background: #333;
-            padding: 10px;
-            border-radius: 5px;
-            margin: 20px 0;
-            font-size: 12px;
-            text-align: left;
+          .btn-success { background: #28a745; }
+          .btn-success:hover { background: #218838; }
+          .user-info { 
+            background: #2a2a2a; 
+            padding: 15px; 
+            border-radius: 5px; 
+            margin: 20px 0; 
           }
+          .hidden { display: none; }
         </style>
       </head>
       <body>
         <div class="container">
           <h2>Desktop Login</h2>
-          <p>To log in on your desktop, you need to be logged in on this device first.</p>
+          <p>Confirm your identity to log in on desktop</p>
           
-          <div style="margin: 30px 0;">
-            <a href="https://shifatsrm09.github.io/qr_frontend/login" class="btn" target="_blank">
-              Login First
-            </a>
-            <p style="font-size: 14px; margin-top: 10px;">Then come back here and click below</p>
+          <div id="loginPrompt">
+            <div style="margin: 30px 0;">
+              <p>First, make sure you're logged in on the mobile app:</p>
+              <a href="https://shifatsrm09.github.io/qr_frontend/login" class="btn" target="_blank">
+                Open Mobile App
+              </a>
+            </div>
+            
+            <div style="margin: 30px 0;">
+              <p>Then check your login status:</p>
+              <button class="btn btn-success" onclick="checkAuthStatus()">
+                Check Login Status
+              </button>
+            </div>
           </div>
           
-          <div style="margin: 30px 0;">
-            <p>Already logged in?</p>
-            <button class="btn btn-check" onclick="checkAuth()">Check My Login Status</button>
+          <div id="authResult" class="hidden">
+            <!-- This will be populated by JavaScript -->
           </div>
           
-          <div id="result" style="margin-top: 20px;"></div>
-          
-          <!-- DEBUG INFO -->
-          <div class="debug-info">
+          <div id="debugInfo" style="margin-top: 30px; font-size: 12px; opacity: 0.7;">
             <strong>Debug Info:</strong><br>
             Session: ${sessionId}<br>
-            Backend: Working ✅<br>
-            QR Status: ${session.status}
+            Status: Ready for authentication
           </div>
-          
+
           <script>
-            async function checkAuth() {
-              const result = document.getElementById('result');
-              result.innerHTML = '<p>Checking your login status...</p>';
+            let userToken = null;
+            let userData = null;
+
+            // Listen for messages from the auth check iframe
+            window.addEventListener('message', function(event) {
+              console.log('Received message:', event.data);
               
-              try {
-                // Try to get the mobile app URL to check if user is logged in
-                const response = await fetch('https://shifatsrm09.github.io/qr_frontend/api-check', {
-                  method: 'GET',
-                  credentials: 'include'
-                });
-                
-                if (response.ok) {
-                  result.innerHTML = '<p style="color: green;">✅ You appear to be logged in!</p>' +
-                                    '<button class="btn" onclick="confirmLogin()">Confirm Desktop Login</button>';
+              if (event.data.type === 'AUTH_STATUS') {
+                if (event.data.loggedIn) {
+                  userToken = event.data.token;
+                  userData = event.data.user;
+                  showAuthSuccess(event.data.user);
                 } else {
-                  throw new Error('Not logged in');
+                  showAuthFailed();
                 }
-              } catch (error) {
-                result.innerHTML = '<p style="color: red;">❌ You are not logged in on the mobile app.</p>' +
-                                  '<p>Please <a href="https://shifatsrm09.github.io/qr_frontend/login" class="btn" style="padding: 10px 20px;">Login Here</a> first.</p>';
               }
+            });
+
+            function checkAuthStatus() {
+              const debugInfo = document.getElementById('debugInfo');
+              debugInfo.innerHTML = '<strong>Debug Info:</strong><br>Checking auth status...';
+              
+              // Create hidden iframe to check auth status
+              const iframe = document.createElement('iframe');
+              iframe.src = 'https://shifatsrm09.github.io/qr_frontend/api-check.html';
+              iframe.style.display = 'none';
+              document.body.appendChild(iframe);
+              
+              setTimeout(() => {
+                if (!userToken) {
+                  debugInfo.innerHTML = '<strong>Debug Info:</strong><br>No auth response received';
+                }
+              }, 3000);
             }
-            
+
+            function showAuthSuccess(user) {
+              const loginPrompt = document.getElementById('loginPrompt');
+              const authResult = document.getElementById('authResult');
+              const debugInfo = document.getElementById('debugInfo');
+              
+              loginPrompt.classList.add('hidden');
+              authResult.classList.remove('hidden');
+              
+              authResult.innerHTML = \`
+                <div class="user-info">
+                  <h3>✅ Logged In As</h3>
+                  <p><strong>\${user.name || 'User'}</strong></p>
+                  <p>\${user.email || ''}</p>
+                </div>
+                <p>Ready to confirm desktop login?</p>
+                <button class="btn btn-success" onclick="confirmLogin()">
+                  Confirm Desktop Login
+                </button>
+              \`;
+              
+              debugInfo.innerHTML = '<strong>Debug Info:</strong><br>User authenticated ✅<br>Token: ' + (userToken ? 'Received' : 'Missing');
+            }
+
+            function showAuthFailed() {
+              const debugInfo = document.getElementById('debugInfo');
+              debugInfo.innerHTML = '<strong>Debug Info:</strong><br>User not logged in ❌';
+              
+              alert('Please log in on the mobile app first, then check again.');
+            }
+
             async function confirmLogin() {
-              const result = document.getElementById('result');
-              result.innerHTML = '<p>Attempting to confirm login...</p>';
+              const debugInfo = document.getElementById('debugInfo');
+              const authResult = document.getElementById('authResult');
+              
+              if (!userToken) {
+                debugInfo.innerHTML = '<strong>Debug Info:</strong><br>No token available ❌';
+                return;
+              }
+
+              debugInfo.innerHTML = '<strong>Debug Info:</strong><br>Sending confirmation...';
               
               try {
-                // This is a simplified approach - in reality we need the mobile's token
                 const response = await fetch('https://qr-frontend-4kwe.onrender.com/api/qr/confirm', {
                   method: 'POST',
                   headers: {
                     'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + userToken
                   },
-                  body: JSON.stringify({ 
-                    sessionId: '${sessionId}',
-                    // Note: We don't have the token here, so we'll need to handle this differently
-                  })
+                  body: JSON.stringify({ sessionId: '${sessionId}' })
                 });
                 
                 const data = await response.json();
+                
                 if (response.ok) {
-                  result.innerHTML = '<p style="color: green;">✅ Success! You can now return to your desktop.</p>';
+                  authResult.innerHTML = '<p style="color: green; font-size: 18px;">✅ Login Confirmed!</p><p>You can now return to your desktop.</p>';
+                  debugInfo.innerHTML = '<strong>Debug Info:</strong><br>Login confirmed successfully! ✅';
                 } else {
-                  result.innerHTML = '<p style="color: red;">❌ ' + data.msg + '</p>' +
-                                    '<p>Please make sure you are logged in on the mobile app.</p>';
+                  authResult.innerHTML = '<p style="color: red;">❌ ' + data.msg + '</p>';
+                  debugInfo.innerHTML = '<strong>Debug Info:</strong><br>Confirmation failed: ' + data.msg;
                 }
               } catch (error) {
-                result.innerHTML = '<p style="color: red;">❌ Network error: ' + error.message + '</p>';
+                authResult.innerHTML = '<p style="color: red;">❌ Network error</p>';
+                debugInfo.innerHTML = '<strong>Debug Info:</strong><br>Network error: ' + error.message;
               }
             }
           </script>

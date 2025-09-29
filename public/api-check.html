@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>API Check</title>
+    <script>
+        // This page checks if user is logged in and returns status
+        window.addEventListener('load', function() {
+            const token = localStorage.getItem('token');
+            const user = localStorage.getItem('user');
+            
+            if (token && user) {
+                // User is logged in - return success
+                window.parent.postMessage({
+                    type: 'AUTH_STATUS',
+                    loggedIn: true,
+                    user: JSON.parse(user),
+                    token: token
+                }, '*');
+            } else {
+                // User not logged in
+                window.parent.postMessage({
+                    type: 'AUTH_STATUS', 
+                    loggedIn: false
+                }, '*');
+            }
+        });
+    </script>
+</head>
+<body>
+    <p>Checking authentication status...</p>
+</body>
+</html>
