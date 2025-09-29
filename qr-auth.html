@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>QR Authentication</title>
+    <style>
+        body { 
+            background: #1a1a1a; 
+            color: white; 
+            text-align: center; 
+            padding: 50px; 
+            font-family: Arial; 
+        }
+        .container { max-width: 500px; margin: 0 auto; }
+        .btn { 
+            background: #007bff; 
+            color: white; 
+            border: none; 
+            padding: 15px 30px; 
+            border-radius: 5px; 
+            cursor: pointer; 
+            font-size: 16px; 
+            margin: 10px; 
+            text-decoration: none;
+            display: inline-block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Desktop Login</h2>
+        <div id="status">
+            <p>Processing your request...</p>
+        </div>
+    </div>
+
+    <script>
+        // Get sessionId from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const sessionId = urlParams.get('sessionId');
+        
+        console.log("QR Auth Page - Session ID:", sessionId);
+        
+        // Check if user is logged in
+        const token = localStorage.getItem('token');
+        const user = localStorage.getItem('user');
+        
+        const statusDiv = document.getElementById('status');
+        
+        if (token && user && sessionId) {
+            console.log("✅ User is logged in, redirecting to backend...");
+            
+            const userData = JSON.parse(user);
+            statusDiv.innerHTML = `
+                <p>Logged in as: <strong>${userData.name || 'User'}</strong></p>
+                <p>${userData.email || ''}</p>
+                <p>Redirecting to confirm...</p>
+            `;
+            
+            // Redirect to backend with all data
+            const backendURL = 'https://qr-frontend-4kwe.onrender.com';
+            const redirectURL = `${backendURL}/api/qr/scan?sessionId=${sessionId}&token=${token}&user=${encodeURIComponent(user)}&email=${encodeURIComponent(userData.email || '')}&name=${encodeURIComponent(userData.name || '')}`;
+            
+            setTimeout(() => {
+                window.location.href = redirectURL;
+            }, 1000);
+            
+        } else {
+            console.log("❌ User not logged in or missing data");
+            statusDiv.innerHTML = `
+                <p style="color: red;">You are not logged in.</p>
+                <p>Please log in first, then scan the QR code again.</p>
+                <a href="/qr_frontend/login" class="btn">Go to Login</a>
+            `;
+        }
+    </script>
+</body>
+</html>

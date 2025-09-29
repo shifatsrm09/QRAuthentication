@@ -1,0 +1,15 @@
+{
+  "files": {
+    "main.css": "/QRAuthentication/static/css/main.d4bbb639.css",
+    "main.js": "/QRAuthentication/static/js/main.86b6bb89.js",
+    "static/js/453.9af69d20.chunk.js": "/QRAuthentication/static/js/453.9af69d20.chunk.js",
+    "index.html": "/QRAuthentication/index.html",
+    "main.d4bbb639.css.map": "/QRAuthentication/static/css/main.d4bbb639.css.map",
+    "main.86b6bb89.js.map": "/QRAuthentication/static/js/main.86b6bb89.js.map",
+    "453.9af69d20.chunk.js.map": "/QRAuthentication/static/js/453.9af69d20.chunk.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.d4bbb639.css",
+    "static/js/main.86b6bb89.js"
+  ]
+}
