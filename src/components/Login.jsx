@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { login } from "../services/authService";
+import { generateQR, checkQRStatus } from "../services/qrService"; // ADD THIS IMPORT
 import { QRCodeCanvas } from "qrcode.react";
 import axios from "axios";
 import email_icon from "../Assets/email.png";
@@ -13,7 +14,7 @@ const Login = () => {
   const [password, setPassword] = useState("");
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   
-  // QR Login States - SIMPLIFIED
+  // QR Login States
   const [qrData, setQrData] = useState({ qrURL: "", sessionId: "" });
   const [isLoading, setIsLoading] = useState(false);
 
@@ -27,16 +28,17 @@ const Login = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Generate QR Code - SIMPLIFIED
+  // Generate QR Code - FIXED
   useEffect(() => {
     if (!isMobile) {
-      const generateQR = async () => {
+      const generateQRCode = async () => {
         try {
           setIsLoading(true);
-          const res = await axios.get("https://qr-frontend-4kwe.onrender.com/api/qr/generate");
+          // FIX: Use the service function, not direct axios call
+          const res = await generateQR();
           setQrData({
-            sessionId: res.data.sessionId,
-            qrURL: res.data.qrURL
+            sessionId: res.sessionId,
+            qrURL: res.qrURL
           });
         } catch (err) {
           console.error("QR generation error:", err);
@@ -44,20 +46,21 @@ const Login = () => {
           setIsLoading(false);
         }
       };
-      generateQR();
+      generateQRCode();
     }
   }, [isMobile]);
 
-  // Polling for QR authentication - CLEANER
+  // Polling for QR authentication - FIXED
   useEffect(() => {
     if (!qrData.sessionId || isMobile) return;
 
     const interval = setInterval(async () => {
       try {
-        const res = await axios.get(`https://qr-frontend-4kwe.onrender.com/api/qr/status?sessionId=${qrData.sessionId}`);
-        if (res.data.authenticated) {
+        // FIX: Use qrData.sessionId, not sessionId variable
+        const res = await checkQRStatus(qrData.sessionId);
+        if (res.authenticated) {
           localStorage.setItem("token", "QR_LOGGED_IN");
-          localStorage.setItem("user", JSON.stringify(res.data.user));
+          localStorage.setItem("user", JSON.stringify(res.user));
           clearInterval(interval);
           navigate("/dashboard");
         }

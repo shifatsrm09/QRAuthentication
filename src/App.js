@@ -3,8 +3,6 @@ import { HashRouter as Router, Routes, Route, Navigate } from "react-router-dom"
 import Login from "./components/Login";
 import Signup from "./components/Signup";
 import Dashboard from "./components/Dashboard";
-import QRLogin from "./components/QRLogin";
-import QRAuth from './components/QRAuth';
 
 const ProtectedRoute = ({ children }) => {
   const token = localStorage.getItem("token");
@@ -22,8 +20,7 @@ function App() {
           path="/dashboard"
           element={<ProtectedRoute><Dashboard /></ProtectedRoute>}
         />
-        <Route path="/qrlogin" element={<QRLogin />} />
-        <Route path="/qr-auth" element={<QRAuth />} />
+      
       </Routes>
     </Router>
   );

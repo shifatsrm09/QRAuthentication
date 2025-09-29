@@ -1,6 +1,15 @@
 const QRSession = require("../models/QRSession");
 const jwt = require("jsonwebtoken");
 
+// Get environment-based URLs
+const getFrontendURL = () => {
+  return process.env.FRONTEND_URL || 'http://localhost:3000';
+};
+
+const getBackendURL = () => {
+  return process.env.BACKEND_URL || 'http://localhost:5000';
+};
+
 // Generate QR session
 exports.generateQR = async (req, res) => {
   try {
@@ -8,10 +17,12 @@ exports.generateQR = async (req, res) => {
     const session = new QRSession({ sessionId });
     await session.save();
     
-    // Point to React app route instead of direct backend
+    // FIXED: Point to live frontend with proper path
+    const qrURL = `${getFrontendURL()}/qr-auth?sessionId=${sessionId}`;
+    
     res.json({ 
       sessionId, 
-      qrURL: `http://192.168.0.100:3000/qr-auth?sessionId=${sessionId}` 
+      qrURL 
     });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -35,8 +46,7 @@ exports.checkStatus = async (req, res) => {
   res.json({ authenticated: false });
 };
 
-
-// Confirm QR Login (SIMPLIFIED FOR TESTING)
+// Confirm QR Login
 exports.confirmQR = async (req, res) => {
   const { sessionId } = req.body;
   const token = req.headers.authorization?.split(" ")[1];
@@ -49,7 +59,7 @@ exports.confirmQR = async (req, res) => {
 
     if (!session) return res.status(404).json({ msg: "QR session not found or expired" });
 
-    // ✅ Link mobile user to session
+    // Link mobile user to session
     session.userId = decoded.id;
     session.status = "authenticated";
     await session.save();
@@ -63,8 +73,7 @@ exports.confirmQR = async (req, res) => {
   }
 };
 
-
-// New function - Mobile scan page
+// Mobile scan page
 exports.scanPage = async (req, res) => {
   const { sessionId, token, user } = req.query;
   
@@ -118,7 +127,7 @@ exports.scanPage = async (req, res) => {
               result.innerHTML = '<p>Sending confirmation...</p>';
               
               try {
-                const response = await fetch('http://192.168.0.100:5000/api/qr/confirm', {
+                const response = await fetch('${getBackendURL()}/api/qr/confirm', {
                   method: 'POST',
                   headers: {
                     'Content-Type': 'application/json',
@@ -142,7 +151,6 @@ exports.scanPage = async (req, res) => {
         </html>
       `);
     } else {
-      // This shouldn't happen with the new flow, but just in case
       res.send(`
         <html>
         <body style="background: #1a1a1a; color: white; text-align: center; padding: 50px; font-family: Arial;">

@@ -29,9 +29,9 @@ connectDB().then(async () => {
   console.error("❌ Failed to connect to MongoDB:", err.message);
 });
 
-// ✅ Routes
+// ✅ Routes - FIXED IMPORT
 app.use("/api/auth", require("./routes/authRoutes"));
-app.use("/api/qr", require("./routes/qrRoutes"));
+app.use("/api/qr", require("./routes/qrRoutes")); // ← CORRECT FILE NAME
 
 // ✅ Global error handler
 app.use((err, req, res, next) => {
