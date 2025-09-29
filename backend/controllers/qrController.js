@@ -11,39 +11,88 @@ const getBackendURL = () => {
 };
 
 // Generate QR session
+// Generate QR session - with enhanced error handling
 exports.generateQR = async (req, res) => {
   try {
+    console.log("🔄 Generating new QR session...");
+    
     const sessionId = Math.random().toString(36).substr(2, 9);
     const session = new QRSession({ sessionId });
-    await session.save();
     
-    // Point to the physical HTML file that exists
+    await session.save();
+    console.log("✅ QR session saved:", sessionId);
+    
     const qrURL = `https://shifatsrm09.github.io/qr_frontend/qr-auth.html?sessionId=${sessionId}`;
     
     res.json({ 
+      success: true,
       sessionId, 
       qrURL 
     });
+    
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error("❌ QR generation error:", err.message);
+    res.status(500).json({ 
+      success: false,
+      error: "Failed to generate QR code",
+      message: err.message 
+    });
   }
 };
 
-// Check QR status (desktop polling)
+
+// Check QR status - with enhanced error handling
 exports.checkStatus = async (req, res) => {
   const { sessionId } = req.query;
-  const session = await QRSession.findOne({ sessionId }).populate("userId");
   
-  if (!session) return res.status(404).json({ authenticated: false });
-
-  if (session.status === "authenticated") {
-    return res.json({
-      authenticated: true,
-      user: { name: session.userId.name, email: session.userId.email }
+  if (!sessionId) {
+    return res.status(400).json({ 
+      success: false,
+      error: "Session ID is required" 
     });
   }
 
-  res.json({ authenticated: false });
+  try {
+    console.log("🔍 Checking QR status for session:", sessionId);
+    
+    const session = await QRSession.findOne({ sessionId }).populate("userId");
+    
+    if (!session) {
+      return res.status(404).json({ 
+        success: false,
+        authenticated: false,
+        error: "QR session not found" 
+      });
+    }
+
+    if (session.status === "authenticated" && session.userId) {
+      console.log("✅ QR session authenticated for user:", session.userId.email);
+      
+      return res.json({
+        success: true,
+        authenticated: true,
+        user: {
+          name: session.userId.name,
+          email: session.userId.email,
+          id: session.userId._id
+        }
+      });
+    }
+
+    res.json({
+      success: true,
+      authenticated: false,
+      status: session.status
+    });
+    
+  } catch (err) {
+    console.error("❌ QR status check error:", err.message);
+    res.status(500).json({ 
+      success: false,
+      error: "Failed to check QR status",
+      message: err.message 
+    });
+  }
 };
 
 // Confirm QR Login

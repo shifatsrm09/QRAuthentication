@@ -1,16 +1,14 @@
-import React, { useState, useEffect } from "react";
-import { useNavigate, Link, useSearchParams } from "react-router-dom";
+import React, { useState, useEffect, useCallback } from "react";
+import { useNavigate, Link } from "react-router-dom";
 import { login } from "../services/authService";
 import { generateQR, checkQRStatus } from "../services/qrService";
 import { QRCodeCanvas } from "qrcode.react";
-import axios from "axios";
 import email_icon from "../Assets/email.png";
 import password_icon from "../Assets/password.png";
 import "./Login.css";
 
 const Login = () => {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
@@ -18,8 +16,9 @@ const Login = () => {
   // QR Login States
   const [qrData, setQrData] = useState({ qrURL: "", sessionId: "" });
   const [isLoading, setIsLoading] = useState(false);
+  const [qrError, setQrError] = useState("");
 
-  // Check if device is mobile
+  // Check if device is mobile - optimized
   useEffect(() => {
     const handleResize = () => {
       setIsMobile(window.innerWidth <= 768);
@@ -29,104 +28,134 @@ const Login = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Check for QR Auth redirect
-  useEffect(() => {
-    const qrAuth = searchParams.get('qrAuth');
-    const sessionId = searchParams.get('sessionId');
+  // Generate QR Code - with proper error handling
+  const generateQRCode = useCallback(async () => {
+    if (isMobile) return;
     
-    if (qrAuth === 'true' && sessionId) {
-      handleQRAuth(sessionId);
-    }
-  }, [searchParams]);
-
-  // Handle QR Auth - Mobile user scans QR and gets redirected here
-  const handleQRAuth = async (sessionId) => {
-    console.log("🔄 QR Auth Handler - Debug Info:");
-    
-    const token = localStorage.getItem('token');
-    const user = localStorage.getItem('user');
-    
-    console.log("📱 Mobile Auth Status:");
-    console.log("- Token exists:", !!token);
-    console.log("- User data exists:", !!user);
-    
-    if (token && user) {
-      console.log("✅ Mobile is logged in, redirecting to backend with data...");
+    try {
+      setIsLoading(true);
+      setQrError("");
+      console.log("🔄 Generating QR code...");
       
-      const userData = JSON.parse(user);
-      console.log("👤 User data:", userData);
+      const data = await generateQR();
       
-      // Redirect to backend with ALL data in URL
-      const backendURL = 'https://qr-frontend-4kwe.onrender.com';
-      const scanURL = `${backendURL}/api/qr/scan?sessionId=${sessionId}&token=${token}&user=${encodeURIComponent(user)}&email=${encodeURIComponent(userData.email || '')}&name=${encodeURIComponent(userData.name || '')}`;
+      if (!data.sessionId || !data.qrURL) {
+        throw new Error("Invalid QR data received");
+      }
       
-      console.log("🔗 Redirecting to:", scanURL);
-      window.location.href = scanURL;
-    } else {
-      console.log("❌ Mobile not logged in, staying on login page");
-      // User needs to log in first
-      alert("Please log in first, then scan the QR code again.");
-    }
-  };
-
-  // Generate QR Code for desktop
-  useEffect(() => {
-    if (!isMobile) {
-      const generateQRCode = async () => {
-        try {
-          setIsLoading(true);
-          const res = await generateQR();
-          setQrData({
-            sessionId: res.sessionId,
-            qrURL: res.qrURL
-          });
-        } catch (err) {
-          console.error("QR generation error:", err);
-        } finally {
-          setIsLoading(false);
-        }
-      };
-      generateQRCode();
+      setQrData({
+        sessionId: data.sessionId,
+        qrURL: data.qrURL
+      });
+      
+      console.log("✅ QR generated successfully");
+    } catch (err) {
+      console.error("❌ QR generation failed:", err.message);
+      setQrError("Failed to generate QR code. Please try again.");
+      setQrData({ qrURL: "", sessionId: "" });
+    } finally {
+      setIsLoading(false);
     }
   }, [isMobile]);
 
-  // Polling for QR authentication
+  useEffect(() => {
+    generateQRCode();
+  }, [generateQRCode]);
+
+  // Polling for QR authentication - robust version
   useEffect(() => {
     if (!qrData.sessionId || isMobile) return;
 
+    let pollCount = 0;
+    const maxPolls = 100; // ~5 minutes at 3-second intervals
+    
+    console.log("🔍 Starting QR polling for session:", qrData.sessionId);
+
     const interval = setInterval(async () => {
       try {
-        const res = await checkQRStatus(qrData.sessionId);
-        if (res.authenticated) {
-          localStorage.setItem("token", "QR_LOGGED_IN");
-          localStorage.setItem("user", JSON.stringify(res.user));
+        pollCount++;
+        
+        if (pollCount > maxPolls) {
+          console.log("⏰ QR session expired - stopping polling");
           clearInterval(interval);
+          setQrError("QR code expired. Please generate a new one.");
+          return;
+        }
+
+        const data = await checkQRStatus(qrData.sessionId);
+        
+        if (data.authenticated && data.user) {
+          console.log("✅ QR authentication successful!");
+          clearInterval(interval);
+          
+          // Store auth data
+          localStorage.setItem("token", data.user.token || "QR_AUTHENTICATED");
+          localStorage.setItem("user", JSON.stringify(data.user));
+          
+          // Navigate to dashboard
           navigate("/dashboard");
         }
+        
+        // Log polling status occasionally
+        if (pollCount % 10 === 0) {
+          console.log(`⏳ Still waiting for QR auth... (poll ${pollCount})`);
+        }
+        
       } catch (err) {
-        console.error("Status check error:", err);
+        console.error("❌ QR status check failed:", err.message);
+        
+        // Don't show error for first few attempts (might be network issues)
+        if (pollCount > 3) {
+          setQrError("Connection issue. Still trying...");
+        }
       }
     }, 3000);
 
-    return () => clearInterval(interval);
+    return () => {
+      console.log("🧹 Cleaning up QR polling");
+      clearInterval(interval);
+    };
   }, [qrData.sessionId, isMobile, navigate]);
 
-  const handleLogin = async () => {
+  const handleLogin = async (e) => {
+    if (e) e.preventDefault();
+    
+    if (!email || !password) {
+      alert("Please enter both email and password");
+      return;
+    }
+
     try {
+      console.log("🔐 Attempting login...");
       const data = await login(email, password);
 
-      if (!data.token) {
-        alert("Login failed: no token received");
-        return;
+      if (!data.token || !data.user) {
+        throw new Error("Invalid response from server");
       }
 
+      // Store auth data
       localStorage.setItem("token", data.token);
       localStorage.setItem("user", JSON.stringify(data.user));
+      
+      console.log("✅ Login successful!");
       navigate("/dashboard");
+      
     } catch (err) {
-      console.error("Login failed:", err.response?.data || err.message);
-      alert("Login failed! Check email/password.");
+      console.error("❌ Login failed:", err.response?.data || err.message);
+      const errorMsg = err.response?.data?.message || "Login failed! Check email/password.";
+      alert(errorMsg);
     }
+  };
+
+  const handleKeyPress = (e) => {
+    if (e.key === 'Enter') {
+      handleLogin();
+    }
+  };
+
+  const refreshQRCode = () => {
+    console.log("🔄 Refreshing QR code...");
+    generateQRCode();
   };
 
   return (
@@ -151,7 +180,9 @@ const Login = () => {
                     placeholder="Email Address"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
+                    onKeyPress={handleKeyPress}
                     className="form-input"
+                    required
                   />
                 </div>
 
@@ -164,12 +195,18 @@ const Login = () => {
                     placeholder="Password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
+                    onKeyPress={handleKeyPress}
                     className="form-input"
+                    required
                   />
                 </div>
               </div>
 
-              <button className="login-btn" onClick={handleLogin}>
+              <button 
+                className="login-btn" 
+                onClick={handleLogin}
+                disabled={!email || !password}
+              >
                 Sign In
               </button>
 
@@ -196,7 +233,17 @@ const Login = () => {
                       <div className="loading-spinner"></div>
                       <p>Generating QR code...</p>
                     </div>
-                  ) : (
+                  ) : qrError ? (
+                    <div className="qr-error">
+                      <p style={{color: 'red', marginBottom: '10px'}}>{qrError}</p>
+                      <button 
+                        onClick={refreshQRCode}
+                        className="btn-retry"
+                      >
+                        Retry
+                      </button>
+                    </div>
+                  ) : qrData.qrURL ? (
                     <div className="qr-code-container">
                       <QRCodeCanvas 
                         value={qrData.qrURL} 
@@ -208,7 +255,7 @@ const Login = () => {
                       />
                       <div className="qr-overlay"></div>
                     </div>
-                  )}
+                  ) : null}
                 </div>
 
                 <div className="qr-instructions">
@@ -222,8 +269,10 @@ const Login = () => {
                 </div>
 
                 <div className="qr-status">
-                  <span className="status-indicator"></span>
-                  <span>Ready for scanning</span>
+                  <span className={`status-indicator ${qrError ? 'error' : qrData.qrURL ? 'ready' : 'loading'}`}></span>
+                  <span>
+                    {qrError ? 'Error' : isLoading ? 'Generating...' : qrData.qrURL ? 'Ready for scanning' : 'Loading...'}
+                  </span>
                 </div>
               </div>
             </div>
