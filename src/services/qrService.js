@@ -1,17 +1,23 @@
 import axios from "axios";
 
-const API_URL = "https://qr-frontend-4kwe.onrender.com/api/qr";
+// Use environment variables with fallbacks
+const API_URL = process.env.REACT_APP_API_URL || "https://qr-frontend-4kwe.onrender.com/api";
+const QR_BASE_URL = process.env.REACT_APP_BACKEND_URL || "https://qr-frontend-4kwe.onrender.com";
 
-// Create axios instance with timeout
+console.log("🔧 Environment Configuration:");
+console.log("- API URL:", API_URL);
+console.log("- Backend URL:", QR_BASE_URL);
+
+// Create axios instance with configuration from env
 const apiClient = axios.create({
-  baseURL: API_URL,
-  timeout: 10000, // 10 second timeout
+  baseURL: `${API_URL}/qr`,
+  timeout: parseInt(process.env.REACT_APP_REQUEST_TIMEOUT) || 10000,
 });
 
-// Request interceptor for logging
+// Request interceptor
 apiClient.interceptors.request.use(
   (config) => {
-    console.log(`🚀 Making ${config.method?.toUpperCase()} request to: ${config.url}`);
+    console.log(`🚀 ${config.method?.toUpperCase()} ${config.url}`);
     return config;
   },
   (error) => {
@@ -20,14 +26,14 @@ apiClient.interceptors.request.use(
   }
 );
 
-// Response interceptor for error handling
+// Response interceptor
 apiClient.interceptors.response.use(
   (response) => {
-    console.log(`✅ Request successful: ${response.status}`);
+    console.log(`✅ ${response.status} ${response.config.url}`);
     return response;
   },
   (error) => {
-    console.error("❌ Response error:", {
+    console.error("❌ API Error:", {
       message: error.message,
       status: error.response?.status,
       url: error.config?.url
@@ -89,3 +95,13 @@ export const confirmQR = async (token, sessionId) => {
     throw new Error(`Failed to confirm QR login: ${error.message}`);
   }
 };
+
+// Get configuration from environment
+export const getConfig = () => ({
+  backendUrl: process.env.REACT_APP_BACKEND_URL,
+  frontendUrl: process.env.REACT_APP_FRONTEND_URL,
+  qrAuthPage: process.env.REACT_APP_QR_AUTH_PAGE,
+  pollingInterval: parseInt(process.env.REACT_APP_QR_POLLING_INTERVAL) || 3000,
+  maxPolls: parseInt(process.env.REACT_APP_QR_MAX_POLLS) || 100,
+  appName: process.env.REACT_APP_APP_NAME || 'QR Auth'
+});

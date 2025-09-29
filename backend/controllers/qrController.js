@@ -1,33 +1,41 @@
 const QRSession = require("../models/QRSession");
 const jwt = require("jsonwebtoken");
 
-// Get environment-based URLs
-const getFrontendURL = () => {
-  return process.env.FRONTEND_URL || 'http://localhost:3000';
-};
-
-const getBackendURL = () => {
-  return process.env.BACKEND_URL || 'http://localhost:5000';
-};
+// Get configuration from environment
+const getConfig = () => ({
+  frontendUrl: process.env.FRONTEND_URL || 'https://shifatsrm09.github.io',
+  frontendPath: process.env.FRONTEND_PATH || '/qr_frontend',
+  backendUrl: process.env.BACKEND_URL || 'https://qr-frontend-4kwe.onrender.com',
+  qrExpiry: parseInt(process.env.QR_EXPIRY_MINUTES) || 5,
+  tokenLength: parseInt(process.env.QR_TOKEN_LENGTH) || 9
+});
 
 // Generate QR session
-// Generate QR session - with enhanced error handling
 exports.generateQR = async (req, res) => {
   try {
-    console.log("🔄 Generating new QR session...");
+    const config = getConfig();
+    console.log("🔧 Backend Config:", config);
     
-    const sessionId = Math.random().toString(36).substr(2, 9);
-    const session = new QRSession({ sessionId });
+    const sessionId = Math.random().toString(36).substr(2, config.tokenLength);
+    const session = new QRSession({ 
+      sessionId,
+      createdAt: new Date(),
+      expiresAt: new Date(Date.now() + config.qrExpiry * 60 * 1000)
+    });
     
     await session.save();
     console.log("✅ QR session saved:", sessionId);
     
-    const qrURL = `https://shifatsrm09.github.io/qr_frontend/qr-auth.html?sessionId=${sessionId}`;
+    // Build QR URL using environment variables
+    const qrURL = `${config.frontendUrl}${config.frontendPath}/qr-auth.html?sessionId=${sessionId}`;
+    
+    console.log("🔗 Generated QR URL:", qrURL);
     
     res.json({ 
       success: true,
       sessionId, 
-      qrURL 
+      qrURL,
+      expiresIn: `${config.qrExpiry} minutes`
     });
     
   } catch (err) {
@@ -40,8 +48,7 @@ exports.generateQR = async (req, res) => {
   }
 };
 
-
-// Check QR status - with enhanced error handling
+// Check QR status
 exports.checkStatus = async (req, res) => {
   const { sessionId } = req.query;
   
@@ -96,8 +103,6 @@ exports.checkStatus = async (req, res) => {
 };
 
 // Confirm QR Login
-// Confirm QR Login
-// Confirm QR Login
 exports.confirmQR = async (req, res) => {
   const { sessionId } = req.body;
   const token = req.headers.authorization?.split(" ")[1];
@@ -123,15 +128,11 @@ exports.confirmQR = async (req, res) => {
     res.status(500).json({ msg: "Server error: " + err.message });
   }
 };
+
 // Mobile scan page
-// Mobile scan page - WORKING VERSION
-// Mobile scan page - WORKING VERSION
-// Mobile scan page - WORKING VERSION
-// Mobile scan page - SIMPLE REDIRECT
-// Mobile scan page - WITH DEBUG INFO
-// Mobile scan page - FINAL WORKING VERSION
 exports.scanPage = async (req, res) => {
   const { sessionId, token, user, email, name } = req.query;
+  const config = getConfig();
   
   console.log("🔍 SCAN PAGE DEBUG INFO:");
   console.log("Session ID:", sessionId);
@@ -232,7 +233,7 @@ exports.scanPage = async (req, res) => {
                 result.innerHTML = '<p>Confirming login...</p>';
                 
                 try {
-                  const response = await fetch('https://qr-frontend-4kwe.onrender.com/api/qr/confirm', {
+                  const response = await fetch('${config.backendUrl}/api/qr/confirm', {
                     method: 'POST',
                     headers: {
                       'Content-Type': 'application/json',
@@ -257,13 +258,16 @@ exports.scanPage = async (req, res) => {
         </html>
       `);
     } else {
-      // No token - this shouldn't happen with the new flow
+      // No token - show error
       res.send(`
         <html>
         <body style="background: #1a1a1a; color: white; text-align: center; padding: 50px; font-family: Arial;">
           <h2>Error</h2>
           <p>Authentication data missing. Please try scanning the QR code again.</p>
-          <a href="https://shifatsrm09.github.io/qr_frontend/login" class="btn">Go to Login</a>
+          <a href="${config.frontendUrl}${config.frontendPath}/login" 
+             style="background: #007bff; color: white; padding: 15px 30px; border-radius: 5px; text-decoration: none;">
+            Go to Login
+          </a>
         </body>
         </html>
       `);
