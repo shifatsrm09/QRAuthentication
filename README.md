@@ -27,14 +27,53 @@ QR Authentication is a **secure, production-ready** authentication system that e
 - 🎨 **Professional UI** - Modern, responsive design
 - 🔧 **Plug & Play** - Easy integration into existing projects
 
-## 🏗️ Architecture
+🔑 Features
+Passwordless Login: Secure QR-based login without traditional credentials
+JWT Security: Stateless authentication with JSON Web Tokens
+Cloud-Ready: Fully hosted with free-tier cloud services
+Reusable Module: Can be integrated into any future project
+Cross-Platform: Works in any modern browser, no extra app required
 
-```mermaid
-graph TB
-    A[Desktop Browser] --> B[React Frontend]
-    B --> C[Node.js Backend]
-    C --> D[MongoDB Atlas]
-    E[Mobile Browser] --> F[QR Scanner]
-    F --> C
-    C --> G[JWT Authentication]
-    G --> A
+---
+
+⚡ Getting Started
+1️⃣ Clone the repo
+git clone https://github.com/shifatsrm09/QRAuthentication.git
+cd QRAuthentication
+
+---
+
+2️⃣ Install dependencies
+npm install
+
+3️⃣ Run locally
+
+Backend must be running first. Then start the frontend:
+
+npm start
+
+4️⃣ Build for production
+npm run build
+
+🌍 Deployment
+Frontend: Deployed on GitHub Pages
+Backend: Deployed on Render (auto-deployment from GitHub)
+Database: MongoDB Atlas (cloud-managed cluster)
+🎯 Use Cases
+🔑 Login system for web apps without passwords
+🏢 Enterprise apps needing quick, secure logins
+📱 Reusable authentication module for future projects
+🌐 Any project that needs scalable, modern authentication
+
+---
+
+🤝 Contribution
+
+This project is open-source. Contributions, issues, and feature requests are welcome!
+Feel free to fork, open pull requests, or submit suggestions.
+
+---
+
+📝 License
+
+This project is licensed under the MIT License – free to use, modify, and distribute.
