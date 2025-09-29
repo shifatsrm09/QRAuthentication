@@ -4,7 +4,7 @@ const jwt = require("jsonwebtoken");
 // Get configuration from environment
 const getConfig = () => ({
   frontendUrl: process.env.FRONTEND_URL || 'https://shifatsrm09.github.io',
-  frontendPath: process.env.FRONTEND_PATH || '/qr_frontend',
+  frontendPath: process.env.FRONTEND_PATH || '/QRAuthentication.git',
   backendUrl: process.env.BACKEND_URL || 'https://qr-frontend-4kwe.onrender.com',
   qrExpiry: parseInt(process.env.QR_EXPIRY_MINUTES) || 5,
   tokenLength: parseInt(process.env.QR_TOKEN_LENGTH) || 9

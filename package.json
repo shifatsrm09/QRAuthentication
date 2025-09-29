@@ -1,8 +1,8 @@
 {
-  "name": "qr_frontend",
+  "name": "qr_authentication",
   "version": "0.1.0",
   "private": true,
-  "homepage": "https://shifatsrm09.github.io/qr_frontend",
+  "homepage": "https://github.com/shifatsrm09/QRAuthentication.git",
   "proxy": "http://localhost:5000",
   "dependencies": {
     "@testing-library/dom": "^10.4.1",
