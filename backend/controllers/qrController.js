@@ -10,15 +10,15 @@ const getBackendURL = () => {
   return process.env.BACKEND_URL || 'http://localhost:5000';
 };
 
-// Generate QR session
+// Generate QR session - POINT TO BACKEND DIRECTLY
 exports.generateQR = async (req, res) => {
   try {
     const sessionId = Math.random().toString(36).substr(2, 9);
     const session = new QRSession({ sessionId });
     await session.save();
     
-    // FIXED: Point to live frontend with proper path
-    const qrURL = `${getFrontendURL()}/qr-auth?sessionId=${sessionId}`;
+    // Point directly to backend - no frontend routing issues
+    const qrURL = `https://qr-frontend-4kwe.onrender.com/api/qr/scan?sessionId=${sessionId}`;
     
     res.json({ 
       sessionId, 
@@ -74,8 +74,9 @@ exports.confirmQR = async (req, res) => {
 };
 
 // Mobile scan page
+// Mobile scan page - IMPROVED VERSION
 exports.scanPage = async (req, res) => {
-  const { sessionId, token, user } = req.query;
+  const { sessionId } = req.query;
   
   try {
     const session = await QRSession.findOne({ sessionId });
@@ -85,6 +86,7 @@ exports.scanPage = async (req, res) => {
           <body style="background: #1a1a1a; color: white; text-align: center; padding: 50px; font-family: Arial;">
             <h2>QR Expired</h2>
             <p>This QR code has expired. Please generate a new one on your desktop.</p>
+            <a href="https://shifatsrm09.github.io/qr_frontend/" style="color: #007bff;">Go to Login</a>
           </body>
         </html>
       `);
@@ -96,71 +98,91 @@ exports.scanPage = async (req, res) => {
           <body style="background: #1a1a1a; color: white; text-align: center; padding: 50px; font-family: Arial;">
             <h2>Already Authenticated</h2>
             <p>This QR code has already been used. You're logged in on desktop!</p>
+            <a href="https://shifatsrm09.github.io/qr_frontend/" style="color: #007bff;">Go to App</a>
           </body>
         </html>
       `);
     }
 
-    // If token is provided from React app, show confirmation
-    if (token) {
-      let userEmail = 'Unknown';
-      try {
-        const userData = JSON.parse(decodeURIComponent(user || '{}'));
-        userEmail = userData.email || 'Unknown';
-      } catch (e) {
-        userEmail = 'Error parsing user';
-      }
-
-      res.send(`
-        <html>
-        <body style="background: #1a1a1a; color: white; text-align: center; padding: 50px; font-family: Arial;">
-          <h2>Confirm Login</h2>
-          <p>Log in as: <strong>${userEmail}</strong></p>
-          <button onclick="confirmLogin('${token}')" style="background: #007bff; color: white; border: none; padding: 15px 30px; border-radius: 5px; cursor: pointer; font-size: 16px;">
-            Confirm Login
-          </button>
+    // Show login prompt and confirmation
+    res.send(`
+      <html>
+      <head>
+        <title>Confirm Desktop Login</title>
+        <style>
+          body { 
+            background: #1a1a1a; 
+            color: white; 
+            text-align: center; 
+            padding: 50px; 
+            font-family: Arial; 
+          }
+          .container { max-width: 400px; margin: 0 auto; }
+          .btn { 
+            background: #007bff; 
+            color: white; 
+            border: none; 
+            padding: 15px 30px; 
+            border-radius: 5px; 
+            cursor: pointer; 
+            font-size: 16px; 
+            margin: 10px; 
+            text-decoration: none;
+            display: inline-block;
+          }
+          .btn:hover { background: #0056b3; }
+          .btn-cancel { background: #6c757d; }
+          .btn-cancel:hover { background: #545b62; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <h2>Desktop Login</h2>
+          <p>Scan this QR code from a device that's already logged in to confirm your identity.</p>
+          
+          <div style="margin: 30px 0;">
+            <a href="https://shifatsrm09.github.io/qr_frontend/login" class="btn">Login First</a>
+            <p style="font-size: 14px; margin-top: 20px;">Then scan the QR code again</p>
+          </div>
+          
+          <div style="margin-top: 30px;">
+            <p>Already logged in?</p>
+            <button class="btn" onclick="confirmLogin()">Confirm Desktop Login</button>
+          </div>
+          
           <div id="result" style="margin-top: 20px;"></div>
           
           <script>
-            async function confirmLogin(token) {
+            async function confirmLogin() {
               const result = document.getElementById('result');
-              result.innerHTML = '<p>Sending confirmation...</p>';
+              result.innerHTML = '<p>Checking authentication...</p>';
               
               try {
-                const response = await fetch('${getBackendURL()}/api/qr/confirm', {
+                // Try to get token from mobile app (if logged in)
+                const response = await fetch('https://qr-frontend-4kwe.onrender.com/api/qr/confirm', {
                   method: 'POST',
                   headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': 'Bearer ' + token
                   },
                   body: JSON.stringify({ sessionId: '${sessionId}' })
                 });
                 
                 const data = await response.json();
                 if (response.ok) {
-                  result.innerHTML = '<p style="color: green;">✅ Success! You can return to desktop.</p>';
+                  result.innerHTML = '<p style="color: green;">✅ Success! You can return to your desktop.</p>';
                 } else {
-                  result.innerHTML = '<p style="color: red;">❌ ' + data.msg + '</p>';
+                  result.innerHTML = '<p style="color: red;">❌ ' + data.msg + '</p>' +
+                                    '<p><a href="https://shifatsrm09.github.io/qr_frontend/login" class="btn">Please Login First</a></p>';
                 }
               } catch (error) {
-                result.innerHTML = '<p style="color: red;">❌ Network error: ' + error.message + '</p>';
+                result.innerHTML = '<p style="color: red;">❌ Network error. Please check your connection.</p>';
               }
             }
           </script>
-        </body>
-        </html>
-      `);
-    } else {
-      res.send(`
-        <html>
-        <body style="background: #1a1a1a; color: white; text-align: center; padding: 50px; font-family: Arial;">
-          <h2>Error</h2>
-          <p>Token not provided. Please scan the QR code from the main application.</p>
-        </body>
-        </html>
-      `);
-    }
-    
+        </div>
+      </body>
+      </html>
+    `);
   } catch (err) {
     res.status(500).send('Server error');
   }
