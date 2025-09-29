@@ -33,7 +33,7 @@ const Login = () => {
       const generateQR = async () => {
         try {
           setIsLoading(true);
-          const res = await axios.get("http://192.168.0.100:5000/api/qr/generate");
+          const res = await axios.get("https://qr-frontend-4kwe.onrender.com/api/qr/generate");
           setQrData({
             sessionId: res.data.sessionId,
             qrURL: res.data.qrURL
@@ -54,7 +54,7 @@ const Login = () => {
 
     const interval = setInterval(async () => {
       try {
-        const res = await axios.get(`http://192.168.0.100:5000/api/qr/status?sessionId=${qrData.sessionId}`);
+        const res = await axios.get(`https://qr-frontend-4kwe.onrender.com/api/qr/status?sessionId=${qrData.sessionId}`);
         if (res.data.authenticated) {
           localStorage.setItem("token", "QR_LOGGED_IN");
           localStorage.setItem("user", JSON.stringify(res.data.user));

@@ -1,5 +1,5 @@
 import axios from "axios";
-const API_URL = "http://192.168.0.100:5000/api/qr";
+const API_URL = "https://qr-frontend-4kwe.onrender.com/api/qr";
 
 export const generateQR = async () => {
   const res = await axios.get(`${API_URL}/generate`);
