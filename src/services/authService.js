@@ -1,7 +1,7 @@
 // src/services/authService.js
 import axios from "axios";
 
-const API_URL = "http://192.168.0.100:5000/api/auth";
+const API_URL = "https://qr-frontend-4kwe.onrender.com/api/auth";
 
 
 // Signup request
