@@ -2,78 +2,106 @@
 
 <div align="center">
 
-![QR Authentication Demo](https://img.shields.io/badge/QR-Authentication-blue?style=for-the-badge&logo=qrcode&logoColor=white)
-![React](https://img.shields.io/badge/React-18.2.0-61DAFB?style=for-the-badge&logo=react)
-![Node.js](https://img.shields.io/badge/Node.js-Express-green?style=for-the-badge&logo=node.js)
-![MongoDB](https://img.shields.io/badge/MongoDB-Atlas-green?style=for-the-badge&logo=mongodb)
+![QR Authentication](https://img.shields.io/badge/QR-Authentication-blue?style=for-the-badge\&logo=qrcode\&logoColor=white)
+![React](https://img.shields.io/badge/Frontend-React-61DAFB?style=for-the-badge\&logo=react)
+![Node.js](https://img.shields.io/badge/Backend-Express.js-green?style=for-the-badge\&logo=node.js)
+![MongoDB](https://img.shields.io/badge/Database-MongoDB%20Atlas-47A248?style=for-the-badge\&logo=mongodb)
 
-**Professional Cross-Device QR Authentication · No App Required · Production Ready**
+**Professional · Passwordless · Cross-Device Authentication — No App Required**
 
-[Live Demo](https://shifatsrm09.github.io/QRAuthentication/) · [Report Bug](https://github.com/shifatsrm09/QRAuthentication/issues) · [Request Feature](https://github.com/shifatsrm09/QRAuthentication/issues)
+[🚀 Live Demo](https://shifatsrm09.github.io/QRAuthentication/) · [🐞 Report Bug](https://github.com/shifatsrm09/QRAuthentication/issues) · [💡 Request Feature](https://github.com/shifatsrm09/QRAuthentication/issues)
 
 </div>
 
-## 🚀 Overview
+---
 
-QR Authentication is a **secure, production-ready** authentication system that enables seamless cross-device login using QR codes. Users can authenticate on desktop devices by scanning a QR code with their already-logged-in mobile browser—no additional apps required.
+## 📌 Overview
 
-### ✨ Key Features
+**QR Authentication** is a **production-ready, passwordless login system** that enables users to authenticate seamlessly across devices.
 
-- 🎯 **Cross-Device Authentication** - Login on desktop using mobile
-- 🔐 **JWT Security** - Industry-standard token-based authentication  
-- 📱 **No App Required** - Works directly in mobile browsers
-- ⚡ **Real-time Sync** - Instant authentication detection
-- 🛡️ **Secure Sessions** - Auto-expiring QR tokens
-- 🎨 **Professional UI** - Modern, responsive design
-- 🔧 **Plug & Play** - Easy integration into existing projects
+🔑 **How it works:**
 
-🔑 Features
-Passwordless Login: Secure QR-based login without traditional credentials
-JWT Security: Stateless authentication with JSON Web Tokens
-Cloud-Ready: Fully hosted with free-tier cloud services
-Reusable Module: Can be integrated into any future project
-Cross-Platform: Works in any modern browser, no extra app required
+* Scan a QR code on your desktop with your already-logged-in mobile browser.
+* Authenticate instantly — no extra apps required.
+* Backed by **JWT security, MongoDB Atlas, and a Node.js backend**.
 
 ---
 
-⚡ Getting Started
-1️⃣ Clone the repo
+## ✨ Features
+
+* 🎯 **Cross-Device Authentication** — login on desktop using mobile
+* 🔐 **JWT Security** — stateless, token-based authentication
+* 📱 **No App Required** — works in any mobile browser
+* ⚡ **Real-Time Sync** — instant login detection
+* 🛡️ **Secure Sessions** — auto-expiring QR tokens
+* 🔧 **Plug & Play** — modular, reusable system
+* 🌍 **Cloud Ready** — hosted on GitHub Pages + Render + MongoDB Atlas
+
+---
+
+## 🛠️ Tech Stack
+
+* **Frontend:** React, Axios, React Router
+* **Backend:** Node.js, Express, JWT
+* **Database:** MongoDB Atlas
+* **Hosting:** GitHub Pages (frontend) · Render (backend)
+
+---
+
+## ⚡ Getting Started
+
+### 1️⃣ Clone the repo
+
+```bash
 git clone https://github.com/shifatsrm09/QRAuthentication.git
 cd QRAuthentication
+```
 
----
+### 2️⃣ Install dependencies
 
-2️⃣ Install dependencies
+```bash
 npm install
+```
 
-3️⃣ Run locally
+### 3️⃣ Run locally
 
-Backend must be running first. Then start the frontend:
+Start the backend first, then run the frontend:
 
+```bash
 npm start
+```
 
-4️⃣ Build for production
+### 4️⃣ Build for production
+
+```bash
 npm run build
-
-🌍 Deployment
-Frontend: Deployed on GitHub Pages
-Backend: Deployed on Render (auto-deployment from GitHub)
-Database: MongoDB Atlas (cloud-managed cluster)
-🎯 Use Cases
-🔑 Login system for web apps without passwords
-🏢 Enterprise apps needing quick, secure logins
-📱 Reusable authentication module for future projects
-🌐 Any project that needs scalable, modern authentication
+```
 
 ---
 
-🤝 Contribution
+## 🎯 Use Cases
 
-This project is open-source. Contributions, issues, and feature requests are welcome!
-Feel free to fork, open pull requests, or submit suggestions.
+* 🔑 Passwordless login for any web application
+* 🏢 Enterprise apps requiring quick & secure login
+* 📱 Plug-and-play authentication for future projects
+* 🌐 Scalable, modern, cross-platform authentication
 
 ---
 
-📝 License
+## 🤝 Contribution
 
-This project is licensed under the MIT License – free to use, modify, and distribute.
+This project is **open-source**. Contributions, issues, and feature requests are welcome!
+
+* Fork it
+* Create a branch
+* Submit a pull request
+
+---
+
+## 📝 License
+
+Licensed under the **MIT License** — free to use, modify, and distribute.
+
+---
+
+✨ Built with passion by **Shifat Rahman**
