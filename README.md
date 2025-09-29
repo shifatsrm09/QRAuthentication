@@ -29,13 +29,13 @@
 
 ## ✨ Features
 
-* 🎯 **Cross-Device Authentication** — login on desktop using mobile
-* 🔐 **JWT Security** — stateless, token-based authentication
-* 📱 **No App Required** — works in any mobile browser
-* ⚡ **Real-Time Sync** — instant login detection
-* 🛡️ **Secure Sessions** — auto-expiring QR tokens
-* 🔧 **Plug & Play** — modular, reusable system
-* 🌍 **Cloud Ready** — hosted on GitHub Pages + Render + MongoDB Atlas
+*  **Cross-Device Authentication** — login on desktop using mobile
+*  **JWT Security** — stateless, token-based authentication
+*  **No App Required** — works in any mobile browser
+*  **Real-Time Sync** — instant login detection
+*  **Secure Sessions** — auto-expiring QR tokens
+*  **Plug & Play** — modular, reusable system
+*  **Cloud Ready** — hosted on GitHub Pages + Render + MongoDB Atlas
 
 ---
 
@@ -47,6 +47,26 @@
 * **Hosting:** GitHub Pages (frontend) · Render (backend)
 
 ---
+
+## 🎯 Use Cases
+
+* 🔑 Passwordless login for any web application
+* 🏢 Enterprise apps requiring quick & secure login
+* 📱 Plug-and-play authentication for future projects
+* 🌐 Scalable, modern, cross-platform authentication
+
+---
+
+## 🤝 Contribution
+
+This project is **open-source**. Contributions, issues, and feature requests are welcome!
+
+* Fork it
+* Create a branch
+* Submit a pull request
+
+---
+
 
 ## ⚡ Getting Started
 
@@ -75,28 +95,8 @@ npm start
 
 ```bash
 npm run build
+
 ```
-
----
-
-## 🎯 Use Cases
-
-* 🔑 Passwordless login for any web application
-* 🏢 Enterprise apps requiring quick & secure login
-* 📱 Plug-and-play authentication for future projects
-* 🌐 Scalable, modern, cross-platform authentication
-
----
-
-## 🤝 Contribution
-
-This project is **open-source**. Contributions, issues, and feature requests are welcome!
-
-* Fork it
-* Create a branch
-* Submit a pull request
-
----
 
 ## 📝 License
 
