@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useSearchParams } from "react-router-dom";
 import { login } from "../services/authService";
-import { generateQR, checkQRStatus } from "../services/qrService"; // ADD THIS IMPORT
+import { generateQR, checkQRStatus } from "../services/qrService";
 import { QRCodeCanvas } from "qrcode.react";
 import axios from "axios";
 import email_icon from "../Assets/email.png";
@@ -10,6 +10,7 @@ import "./Login.css";
 
 const Login = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
@@ -28,13 +29,52 @@ const Login = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Generate QR Code - FIXED
+  // Check for QR Auth redirect
+  useEffect(() => {
+    const qrAuth = searchParams.get('qrAuth');
+    const sessionId = searchParams.get('sessionId');
+    
+    if (qrAuth === 'true' && sessionId) {
+      handleQRAuth(sessionId);
+    }
+  }, [searchParams]);
+
+  // Handle QR Auth - Mobile user scans QR and gets redirected here
+  const handleQRAuth = async (sessionId) => {
+    console.log("🔄 QR Auth Handler - Debug Info:");
+    
+    const token = localStorage.getItem('token');
+    const user = localStorage.getItem('user');
+    
+    console.log("📱 Mobile Auth Status:");
+    console.log("- Token exists:", !!token);
+    console.log("- User data exists:", !!user);
+    
+    if (token && user) {
+      console.log("✅ Mobile is logged in, redirecting to backend with data...");
+      
+      const userData = JSON.parse(user);
+      console.log("👤 User data:", userData);
+      
+      // Redirect to backend with ALL data in URL
+      const backendURL = 'https://qr-frontend-4kwe.onrender.com';
+      const scanURL = `${backendURL}/api/qr/scan?sessionId=${sessionId}&token=${token}&user=${encodeURIComponent(user)}&email=${encodeURIComponent(userData.email || '')}&name=${encodeURIComponent(userData.name || '')}`;
+      
+      console.log("🔗 Redirecting to:", scanURL);
+      window.location.href = scanURL;
+    } else {
+      console.log("❌ Mobile not logged in, staying on login page");
+      // User needs to log in first
+      alert("Please log in first, then scan the QR code again.");
+    }
+  };
+
+  // Generate QR Code for desktop
   useEffect(() => {
     if (!isMobile) {
       const generateQRCode = async () => {
         try {
           setIsLoading(true);
-          // FIX: Use the service function, not direct axios call
           const res = await generateQR();
           setQrData({
             sessionId: res.sessionId,
@@ -50,13 +90,12 @@ const Login = () => {
     }
   }, [isMobile]);
 
-  // Polling for QR authentication - FIXED
+  // Polling for QR authentication
   useEffect(() => {
     if (!qrData.sessionId || isMobile) return;
 
     const interval = setInterval(async () => {
       try {
-        // FIX: Use qrData.sessionId, not sessionId variable
         const res = await checkQRStatus(qrData.sessionId);
         if (res.authenticated) {
           localStorage.setItem("token", "QR_LOGGED_IN");

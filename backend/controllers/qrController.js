@@ -10,8 +10,6 @@ const getBackendURL = () => {
   return process.env.BACKEND_URL || 'http://localhost:5000';
 };
 
-// Generate QR session - POINT TO BACKEND DIRECTLY
-// Generate QR session
 // Generate QR session
 exports.generateQR = async (req, res) => {
   try {
@@ -19,8 +17,8 @@ exports.generateQR = async (req, res) => {
     const session = new QRSession({ sessionId });
     await session.save();
     
-    // Point to backend scan page
-    const qrURL = `https://qr-frontend-4kwe.onrender.com/api/qr/scan?sessionId=${sessionId}`;
+    // Point to the physical HTML file that exists
+    const qrURL = `https://shifatsrm09.github.io/qr_frontend/qr-auth.html?sessionId=${sessionId}`;
     
     res.json({ 
       sessionId, 
@@ -81,11 +79,18 @@ exports.confirmQR = async (req, res) => {
 // Mobile scan page - WORKING VERSION
 // Mobile scan page - WORKING VERSION
 // Mobile scan page - SIMPLE REDIRECT
+// Mobile scan page - WITH DEBUG INFO
+// Mobile scan page - FINAL WORKING VERSION
 exports.scanPage = async (req, res) => {
-  const { sessionId } = req.query;
+  const { sessionId, token, user, email, name } = req.query;
   
-  console.log("📱 Mobile scanned QR - Session:", sessionId);
-  
+  console.log("🔍 SCAN PAGE DEBUG INFO:");
+  console.log("Session ID:", sessionId);
+  console.log("Token received:", token ? "YES (" + token.substring(0, 20) + "...)" : "NO");
+  console.log("User data received:", user ? "YES" : "NO");
+  console.log("Email:", email || "NO");
+  console.log("Name:", name || "NO");
+
   try {
     const session = await QRSession.findOne({ sessionId });
     
@@ -104,95 +109,116 @@ exports.scanPage = async (req, res) => {
       return res.send(`
         <html>
           <body style="background: #1a1a1a; color: white; text-align: center; padding: 50px; font-family: Arial;">
-            <h2>Already Logged In</h2>
+            <h2>Already Authenticated</h2>
             <p>This QR code has already been used. You're logged in on desktop!</p>
           </body>
         </html>
       `);
     }
 
-    // Simple page that tells user what to do
-    res.send(`
-      <html>
-      <head>
-        <title>Desktop Login</title>
-        <style>
-          body { 
-            background: #1a1a1a; 
-            color: white; 
-            text-align: center; 
-            padding: 50px; 
-            font-family: Arial; 
-          }
-          .container { max-width: 400px; margin: 0 auto; }
-          .btn { 
-            background: #007bff; 
-            color: white; 
-            border: none; 
-            padding: 15px 30px; 
-            border-radius: 5px; 
-            cursor: pointer; 
-            font-size: 16px; 
-            margin: 10px; 
-            text-decoration: none;
-            display: inline-block;
-          }
-        </style>
-      </head>
-      <body>
-        <div class="container">
-          <h2>Confirm Desktop Login</h2>
-          <p>Click the button below to confirm you want to log in on your desktop.</p>
-          
-          <div style="margin: 30px 0;">
-            <button class="btn" onclick="confirmLogin()">
-              Confirm Desktop Login
-            </button>
-          </div>
-          
-          <div id="result" style="margin-top: 20px;"></div>
+    // If we have token, show confirmation
+    if (token) {
+      let userEmail = email || 'Unknown';
+      let userName = name || 'User';
+      
+      try {
+        const userData = JSON.parse(decodeURIComponent(user));
+        userEmail = userData.email || userEmail;
+        userName = userData.name || userName;
+      } catch (e) {
+        console.log("Error parsing user data:", e.message);
+      }
 
-          <script>
-            async function confirmLogin() {
-              const result = document.getElementById('result');
-              result.innerHTML = '<p>Confirming login...</p>';
-              
-              try {
-                // Get the mobile user's token from localStorage
-                const token = localStorage.getItem('token');
-                const user = localStorage.getItem('user');
-                
-                if (!token) {
-                  result.innerHTML = '<p style="color: red;">❌ You are not logged in. Please log in first.</p>' +
-                                    '<a href="https://shifatsrm09.github.io/qr_frontend/login" class="btn">Go to Login</a>';
-                  return;
-                }
-
-                // Send confirmation to backend
-                const response = await fetch('https://qr-frontend-4kwe.onrender.com/api/qr/confirm', {
-                  method: 'POST',
-                  headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': 'Bearer ' + token
-                  },
-                  body: JSON.stringify({ sessionId: '${sessionId}' })
-                });
-                
-                const data = await response.json();
-                if (response.ok) {
-                  result.innerHTML = '<p style="color: green;">✅ Success! You can now return to your desktop.</p>';
-                } else {
-                  result.innerHTML = '<p style="color: red;">❌ ' + data.msg + '</p>';
-                }
-              } catch (error) {
-                result.innerHTML = '<p style="color: red;">❌ Error: ' + error.message + '</p>';
-              }
+      res.send(`
+        <html>
+        <head>
+          <title>Confirm Desktop Login</title>
+          <style>
+            body { 
+              background: #1a1a1a; 
+              color: white; 
+              text-align: center; 
+              padding: 50px; 
+              font-family: Arial; 
             }
-          </script>
-        </div>
-      </body>
-      </html>
-    `);
+            .container { max-width: 400px; margin: 0 auto; }
+            .btn { 
+              background: #007bff; 
+              color: white; 
+              border: none; 
+              padding: 15px 30px; 
+              border-radius: 5px; 
+              cursor: pointer; 
+              font-size: 16px; 
+              margin: 10px; 
+            }
+            .btn:hover { background: #0056b3; }
+            .user-info { 
+              background: #2a2a2a; 
+              padding: 15px; 
+              border-radius: 5px; 
+              margin: 20px 0; 
+            }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <h2>Confirm Desktop Login</h2>
+            
+            <div class="user-info">
+              <p>You are logged in as:</p>
+              <h3>${userName}</h3>
+              <p>${userEmail}</p>
+            </div>
+            
+            <p>Do you want to log in to your desktop with this account?</p>
+            
+            <button class="btn" onclick="confirmLogin()">Yes, Log Me In</button>
+            
+            <div id="result" style="margin-top: 20px;"></div>
+            
+            <script>
+              async function confirmLogin() {
+                const result = document.getElementById('result');
+                result.innerHTML = '<p>Confirming login...</p>';
+                
+                try {
+                  const response = await fetch('https://qr-frontend-4kwe.onrender.com/api/qr/confirm', {
+                    method: 'POST',
+                    headers: {
+                      'Content-Type': 'application/json',
+                      'Authorization': 'Bearer ${token}'
+                    },
+                    body: JSON.stringify({ sessionId: '${sessionId}' })
+                  });
+                  
+                  const data = await response.json();
+                  if (response.ok) {
+                    result.innerHTML = '<p style="color: green;">✅ Success! You can now return to your desktop.</p>';
+                  } else {
+                    result.innerHTML = '<p style="color: red;">❌ ' + data.msg + '</p>';
+                  }
+                } catch (error) {
+                  result.innerHTML = '<p style="color: red;">❌ Network error: ' + error.message + '</p>';
+                }
+              }
+            </script>
+          </div>
+        </body>
+        </html>
+      `);
+    } else {
+      // No token - this shouldn't happen with the new flow
+      res.send(`
+        <html>
+        <body style="background: #1a1a1a; color: white; text-align: center; padding: 50px; font-family: Arial;">
+          <h2>Error</h2>
+          <p>Authentication data missing. Please try scanning the QR code again.</p>
+          <a href="https://shifatsrm09.github.io/qr_frontend/login" class="btn">Go to Login</a>
+        </body>
+        </html>
+      `);
+    }
   } catch (err) {
     res.status(500).send('Server error');
   }
