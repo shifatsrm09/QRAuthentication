@@ -29,6 +29,11 @@ connectDB().then(async () => {
   console.error("❌ Failed to connect to MongoDB:", err.message);
 });
 
+//UPTIME  health check
+app.get("/api/health", (req, res) => {
+  res.status(200).json({ status: "ok" });
+});
+
 // ✅ Routes - FIXED IMPORT
 app.use("/api/auth", require("./routes/authRoutes"));
 app.use("/api/qr", require("./routes/qrRoutes")); // ← CORRECT FILE NAME
@@ -43,6 +48,3 @@ app.use((err, req, res, next) => {
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, "0.0.0.0", () => console.log(`🚀 Server running on port ${PORT}`));
 
-app.get("/api/health", (req, res) => {
-  res.status(200).json({ status: "ok" });
-});
