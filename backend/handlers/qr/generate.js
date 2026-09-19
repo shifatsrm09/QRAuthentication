@@ -1,33 +1,20 @@
 // GET /api/qr/generate
-const crypto = require("crypto");
-const connectDB = require("../../../lib/db");
-const QRSession = require("../../../lib/models/QRSession");
+// No database access: the session id is self-verifying (see lib/qrSession.js),
+// so the QR code can be returned immediately, even on a cold start.
 const { fail, allowMethods, getOrigin } = require("../../../lib/http");
+const { createSessionId } = require("../../../lib/qrSession");
 
-const QR_EXPIRY_MINUTES = 5; // keep in sync with the TTL index in models/QRSession.js
-
-module.exports = async (req, res) => {
+module.exports = (req, res) => {
   if (!allowMethods(req, res, ["GET"])) return;
 
   try {
-    await connectDB();
-
-    const sessionId = crypto.randomBytes(16).toString("hex");
-    await QRSession.create({
-      sessionId,
-      expiresAt: new Date(Date.now() + QR_EXPIRY_MINUTES * 60 * 1000),
-    });
+    const { sessionId } = createSessionId();
 
     // Frontend and API share one origin on Vercel, so the phone opens
     // the static confirm page from the same site it's logged into.
     const qrURL = `${getOrigin(req)}/qr-auth.html?sessionId=${sessionId}`;
 
-    return res.json({
-      success: true,
-      sessionId,
-      qrURL,
-      expiresIn: `${QR_EXPIRY_MINUTES} minutes`,
-    });
+    return res.json({ success: true, sessionId, qrURL, expiresIn: "5 minutes" });
   } catch (err) {
     console.error("QR generation error:", err);
     return fail(res, 500, "Failed to generate QR code", { error: "Failed to generate QR code" });

@@ -1,29 +1,25 @@
 import React from "react";
-import { HashRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Login from "./components/Login";
 import Signup from "./components/Signup";
 import Dashboard from "./components/Dashboard";
+import { hasValidSession } from "./utils/session";
 
-const ProtectedRoute = ({ children }) => {
-  const token = localStorage.getItem("token");
-  return token ? children : <Navigate to="/login" />;
-};
+// Only for signed-in users; expired or missing sessions go to /login.
+const RequireAuth = ({ children }) => (hasValidSession() ? children : <Navigate to="/login" replace />);
 
-function App() {
-  return (
-    <Router>
-      <Routes>
-        <Route path="/" element={<Navigate to="/login" />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/signup" element={<Signup />} />
-        <Route
-          path="/dashboard"
-          element={<ProtectedRoute><Dashboard /></ProtectedRoute>}
-        />
-      
-      </Routes>
-    </Router>
-  );
-}
+// Only for signed-out users; signed-in users skip straight to the dashboard.
+const GuestOnly = ({ children }) => (hasValidSession() ? <Navigate to="/dashboard" replace /> : children);
+
+const App = () => (
+  <BrowserRouter>
+    <Routes>
+      <Route path="/login" element={<GuestOnly><Login /></GuestOnly>} />
+      <Route path="/signup" element={<GuestOnly><Signup /></GuestOnly>} />
+      <Route path="/dashboard" element={<RequireAuth><Dashboard /></RequireAuth>} />
+      <Route path="*" element={<Navigate to="/login" replace />} />
+    </Routes>
+  </BrowserRouter>
+);
 
 export default App;

@@ -1,126 +1,82 @@
-# 🔐 QR Authentication System
+# QR Auth Starter
 
+A **Create React App boilerplate for starting a new project with the login pipeline already built**: email/password authentication plus QR-code sign-in (scan with a phone that's already logged in to approve a desktop login). Clone it, plug in your database, and start building your app on top.
 
+**Stack:** React 19 (CRA) · Express API deployed as a single Vercel serverless function · MongoDB (Mongoose) · JWT
 
-<div align="center">
+## What's included
 
-![QR Authentication](https://img.shields.io/badge/QR-Authentication-blue?style=for-the-badge\&logo=qrcode\&logoColor=white)
-![React](https://img.shields.io/badge/Frontend-React-61DAFB?style=for-the-badge\&logo=react)
-![Node.js](https://img.shields.io/badge/Backend-Express.js-green?style=for-the-badge\&logo=node.js)
-![MongoDB](https://img.shields.io/badge/Database-MongoDB%20Atlas-47A248?style=for-the-badge\&logo=mongodb)
+- Sign up, log in, protected dashboard, logout
+- QR login: the desktop shows a QR code, the phone confirms, the desktop signs in automatically
+- Sessions that expire (QR codes after 5 min and single-use; login tokens after 1 h)
+- Responsive dark UI styled by one CSS file (`src/index.css`)
+- One-command local dev, Vercel-ready deployment
 
-**Professional · Passwordless · Cross-Device Authentication — No App Required**
-
-[🐞 Report Bug](https://github.com/shifatsrm09/QRAuthentication/issues) · [💡 Request Feature](https://github.com/shifatsrm09/QRAuthentication/issues)
-
-</div>
-
----
-
-## 📌 Overview
-
-**QR Authentication** is a **production-ready, passwordless login system** that enables users to authenticate seamlessly across devices.
-
-🔑 **How it works:**
-
-* Scan a QR code on your desktop with your already-logged-in mobile browser.
-* Authenticate instantly — no extra apps required.
-* Backed by **JWT security, MongoDB Atlas, and a Node.js backend**.
-
----
-
-## ✨ Features
-
-*  **Cross-Device Authentication** — login on desktop using mobile
-*  **JWT Security** — stateless, token-based authentication
-*  **No App Required** — works in any mobile browser
-*  **Real-Time Sync** — instant login detection
-*  **Secure Sessions** — auto-expiring QR tokens
-*  **Plug & Play** — modular, reusable system
-*  **Cloud Ready** — fully serverless on Vercel + MongoDB Atlas
-
----
-
-## 🛠️ Tech Stack
-
-* **Frontend:** React, Axios, React Router
-* **Backend:** Vercel Serverless Functions (`/api`), JWT
-* **Database:** MongoDB Atlas
-* **Hosting:** Vercel (frontend + API on one origin)
-
----
-
-## 🎯 Use Cases
-
-* 🔑 Passwordless login for any web application
-* 🏢 Enterprise apps requiring quick & secure login
-* 📱 Plug-and-play authentication for future projects
-* 🌐 Scalable, modern, cross-platform authentication
-
----
-
-## 🤝 Contribution
-
-This project is **open-source**. Contributions, issues, and feature requests are welcome!
-
-* Fork it
-* Create a branch
-* Submit a pull request
-
----
-
-
-## Getting Started
-
-Use Node.js 24. The React frontend is in the repository root; Express is in backend/.
-
-### Install
-
-Run npm install in the repository root. You may also run npm install inside backend/ when working there; the root install is required for the shared libraries.
-
-Copy .env.example to .env.local in the root and backend/.env.example to backend/.env. Set MONGO_URI and JWT_SECRET in backend/.env. Existing shell variables take precedence, followed by backend/.env.local, backend/.env, root .env.local, and root .env.
-
-### Run locally
-
-In the repository root (frontend):
+## Quick start
 
 ```bash
-npm start
+git clone <your-repo-url>
+cd <your-repo>
+npm install
+cp .env.example .env        # Windows: copy .env.example .env
 ```
 
-In a second terminal (backend):
+Open `.env` and set `MONGO_URI` (a free [MongoDB Atlas](https://www.mongodb.com/atlas) cluster works) and `JWT_SECRET`, then:
 
 ```bash
-cd backend
-npm start
+npm run dev
 ```
 
-Open http://localhost:3000. React reloads on edits, and the backend restarts on edits using Node's watch mode. The frontend proxies /api to port 5000. If you change the backend port, set API_PORT in the root .env.local to the same port.
+The app runs at **http://localhost:3000** (the API runs on port 5000 and is proxied automatically). Requires Node 24.
 
-Alternatively, run npm run dev from the root to start both together.
+## Deploy to Vercel
 
-For cross-device QR testing, open http://YOUR-LAN-IP:3000 on both desktop and phone on the same network. Log in on the phone, then scan and confirm the desktop QR. The QR URL follows the frontend request origin; APP_URL can override it. A phone cannot access your computer through localhost. Allow port 3000 through your firewall if needed.
+1. Push the repo to GitHub and import it in Vercel. `vercel.json` is already configured.
+2. Add `MONGO_URI` and `JWT_SECRET` under **Settings → Environment Variables**.
+3. In MongoDB Atlas → **Network Access**, allow `0.0.0.0/0` (Vercel's IPs change).
+4. Deploy.
 
-If local QR generation fails with `querySrv ECONNREFUSED`, your DNS resolver may be refusing MongoDB Atlas SRV queries. Set `MONGO_DNS_SERVERS=1.1.1.1,8.8.8.8` in `backend/.env.local` and restart the backend. This optional override is local; leave it unset on Vercel unless its DNS also needs an override.
+## How QR login works
 
-### Vercel deployment
+1. The login page asks the API for a signed, expiring session id (no database involved, so the QR code appears instantly) and shows it as a QR code.
+2. The phone scans it, opens `/qr-auth.html`, and (if already logged in) taps **Yes, Log Me In**. Only now is a session row written to the database.
+3. The desktop, which polls the API, receives a one-time token and goes to the dashboard.
 
-Import the repository with its root directory set to the repository root, using the Create React App preset. vercel.json sets npm run build and the build output folder. React is served as static files; /api/* routes to api/index.js, which exports the same Express app used locally. The backend is included in deployment and does not open a listening port in Vercel.
+To test the QR flow on a real phone, use your deployed URL, or set `APP_URL` to your computer's LAN address and log in on the phone at that same address.
 
-Set MONGO_URI and JWT_SECRET in Vercel Project Settings → Environment Variables for each deployment environment you use. Optionally set APP_URL to your public frontend origin. Keep REACT_APP_API_URL=/api (or omit it); do not use the old Render URL. Local .env files are not transferred. Configure MongoDB network access to allow the deployment to connect.
+## Project structure
 
-Push to Vercel's connected production branch to trigger deployment. Changes to environment variables require a new deployment. /api/health checks that the API is running; authentication and QR endpoints also require MongoDB.
-
-### Verification
-
-```bash
-npm run build
-npm run test:api
-npm test -- --watchAll=false
+```
+api/index.js         Vercel entry point (exposes the Express app)
+backend/             Express app: routes, handlers, local server, API tests
+lib/                 MongoDB connection, models, shared helpers
+src/
+  components/        Login, Signup, Dashboard, QrPanel, ...
+  hooks/             useQrLogin, useMediaQuery
+  services/          API client
+  utils/session.js   Token/session storage
+  index.css          The only stylesheet
+public/qr-auth.html  Page the phone opens after scanning
 ```
 
-API tests exercise the real Express routes with an in-memory model stub, including signup, password login, QR confirmation/token exchange, expiry, and replay prevention. They do not write to your MongoDB database.
+## API
 
-## License
+| Method | Endpoint | Purpose |
+| --- | --- | --- |
+| POST | `/api/auth/signup` | Create an account |
+| POST | `/api/auth/login` | Log in, returns a token |
+| GET | `/api/auth/me` | Current user (Bearer token) |
+| GET | `/api/qr/generate` | Create a QR session |
+| GET | `/api/qr/status?sessionId=` | Desktop polls; returns a token once approved |
+| POST | `/api/qr/confirm` | Phone approves the session (Bearer token) |
+| GET | `/api/health` | Health check |
 
-Licensed under the MIT License.
+## Make it yours
+
+- Build your app in `src/components/Dashboard.jsx` and add routes in `src/App.js`
+- Change colours in the `:root` block at the top of `src/index.css`
+- Add API routes under `backend/routes` and `backend/handlers`
+
+## Scripts
+
+`npm run dev` start API + frontend · `npm run build` production build · `npm test` frontend tests · `npm run test:api` API tests

@@ -1,15 +1,537 @@
+/* =====================================================================
+   Single stylesheet for the whole app (login, signup, dashboard, QR).
+   Sections: tokens · base · layout · card · form · buttons · messages ·
+             QR · dashboard · responsive · accessibility
+   ===================================================================== */
+
+/* ---------- Tokens ---------- */
+:root {
+  --bg: #0a0a0a;
+  --bg-elevated: #1a1a1a;
+  --card: #2a2a2a;
+  --input: #1f1f1f;
+  --border: #333333;
+  --text: #ffffff;
+  --text-muted: #b0b0b0;
+  --accent: #667eea;
+  --accent-2: #764ba2;
+  --danger: #ff6b6b;
+  --success: #4ade80;
+  --warning: #fbbf24;
+  --radius: 12px;
+  --radius-lg: 20px;
+  color-scheme: dark;
+}
+
+/* ---------- Base ---------- */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+/* Solid dark background on the root elements: nothing but this colour can
+   ever show while the app loads, on overscroll, or behind short pages. */
+html {
+  background: var(--bg);
+  -webkit-text-size-adjust: 100%;
+}
+
 body {
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
+  min-height: 100vh;
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-   background: linear-gradient(#ff0000, #000000);
-   height: 100vh;
+  -webkit-tap-highlight-color: transparent;
+}
+
+h1, h2, h3, p, ol, ul {
+  margin: 0;
+}
+
+h1, h2, h3 {
+  line-height: 1.2;
+}
+
+img {
+  max-width: 100%;
 }
 
 code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-    monospace;
+  padding: 2px 6px;
+  border-radius: 6px;
+  background: var(--bg-elevated);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.9em;
+}
+
+.muted {
+  color: var(--text-muted);
+}
+
+/* ---------- Layout ---------- */
+.page {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  min-height: 100dvh;
+  padding:
+    max(16px, env(safe-area-inset-top))
+    max(16px, env(safe-area-inset-right))
+    max(16px, env(safe-area-inset-bottom))
+    max(16px, env(safe-area-inset-left));
+  background: linear-gradient(135deg, #0c0c0c 0%, #1a1a1a 100%);
+}
+
+.page--top {
+  align-items: flex-start;
+}
+
+.auth-layout {
+  display: grid;
+  gap: 24px;
+  width: 100%;
+  max-width: 440px;
+}
+
+/* ---------- Card ---------- */
+.card {
+  min-width: 0;
+  padding: clamp(24px, 5vw, 40px);
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+}
+
+.card--narrow {
+  width: 100%;
+  max-width: 440px;
+}
+
+.card h3 {
+  margin-bottom: 8px;
+  font-size: 1.25rem;
+}
+
+.card__header {
+  margin-bottom: 28px;
+  text-align: center;
+}
+
+.card__header h1 {
+  font-size: clamp(1.6rem, 5vw, 2rem);
+}
+
+.card__header h2 {
+  font-size: 1.5rem;
+}
+
+.card__header p {
+  margin-top: 8px;
+  color: var(--text-muted);
+}
+
+.card__footer {
+  margin-top: 24px;
+  color: var(--text-muted);
+  font-size: 0.875rem;
+  text-align: center;
+}
+
+/* ---------- Form ---------- */
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.input-group {
+  position: relative;
+}
+
+.input-icon {
+  position: absolute;
+  top: 50%;
+  left: 16px;
+  display: flex;
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+.input-icon img {
+  width: 20px;
+  height: 20px;
+  filter: brightness(0.7);
+}
+
+.form-input {
+  width: 100%;
+  min-height: 48px;
+  padding: 14px 16px 14px 48px;
+  background: var(--input);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text);
+  font: inherit;
+  font-size: 16px; /* 16px stops iOS Safari zooming into the field */
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.form-input::placeholder {
+  color: var(--text-muted);
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.25);
+}
+
+/* Keep browser autofill from painting fields white */
+.form-input:-webkit-autofill {
+  -webkit-text-fill-color: var(--text);
+  caret-color: var(--text);
+  box-shadow: 0 0 0 1000px var(--input) inset;
+}
+
+.link {
+  color: var(--accent);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.link:hover {
+  text-decoration: underline;
+}
+
+/* ---------- Buttons ---------- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 48px; /* comfortable touch target */
+  padding: 12px 20px;
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+  color: #ffffff;
+  font: inherit;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s, opacity 0.2s;
+}
+
+.btn--primary {
+  background: linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%);
+}
+
+.btn--secondary {
+  background: var(--bg-elevated);
+  border-color: var(--border);
+}
+
+.btn--danger {
+  background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);
+}
+
+.btn--auto {
+  width: auto;
+}
+
+@media (hover: hover) {
+  .btn:not(:disabled):hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+  }
+
+  .btn--danger:not(:disabled):hover {
+    box-shadow: 0 10px 25px rgba(255, 107, 107, 0.3);
+  }
+}
+
+.btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* ---------- Messages & spinner ---------- */
+.message {
+  padding: 12px 14px;
+  border: 1px solid;
+  border-radius: var(--radius);
+  font-size: 0.875rem;
+  text-align: center;
+}
+
+.message--error {
+  color: var(--danger);
+  background: rgba(255, 107, 107, 0.1);
+  border-color: rgba(255, 107, 107, 0.35);
+}
+
+.message--success {
+  color: var(--success);
+  background: rgba(74, 222, 128, 0.1);
+  border-color: rgba(74, 222, 128, 0.35);
+}
+
+.message--warning {
+  margin-bottom: 16px;
+  color: var(--warning);
+  background: rgba(251, 191, 36, 0.1);
+  border-color: rgba(251, 191, 36, 0.35);
+}
+
+.spinner {
+  flex: none;
+  width: 40px;
+  height: 40px;
+  border: 3px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+.spinner--sm {
+  width: 16px;
+  height: 16px;
+  border-width: 2px;
+  border-color: rgba(255, 255, 255, 0.35);
+  border-top-color: #ffffff;
+}
+
+/* ---------- QR login ---------- */
+/* Fixed min-height so the card doesn't jump between loading / QR / error */
+.qr-stage {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 264px;
+  margin-bottom: 20px;
+}
+
+.qr-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+.qr-state .btn {
+  width: auto;
+}
+
+.qr-frame {
+  position: relative;
+  padding: 20px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.qr-frame canvas {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+.qr-scanline {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  left: 20px;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--accent), transparent);
+  opacity: 0.7;
+  pointer-events: none;
+  animation: scan 2.4s ease-in-out infinite;
+}
+
+.qr-steps {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 20px;
+  padding: 16px 16px 16px 36px;
+  background: var(--bg-elevated);
+  border-radius: var(--radius);
+  color: var(--text-muted);
+  font-size: 0.875rem;
+}
+
+.qr-steps li::marker {
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.qr-status {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  color: var(--text-muted);
+  font-size: 0.875rem;
+}
+
+.qr-status__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--text-muted);
+}
+
+.qr-status__dot--ready {
+  background: var(--success);
+  animation: pulse 2s ease-in-out infinite;
+}
+
+.qr-status__dot--loading {
+  background: var(--warning);
+}
+
+.qr-status__dot--error {
+  background: var(--danger);
+}
+
+/* ---------- Dashboard ---------- */
+.dashboard {
+  width: 100%;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.dashboard__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 24px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--border);
+}
+
+.dashboard__header h1 {
+  font-size: clamp(1.5rem, 5vw, 2.25rem);
+}
+
+.dashboard__body {
+  display: grid;
+  gap: 20px;
+}
+
+.profile {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.profile__info {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.profile__info h2 {
+  font-size: clamp(1.25rem, 4vw, 1.75rem);
+}
+
+.profile__info p {
+  margin-top: 6px;
+  color: var(--text-muted);
+}
+
+.avatar {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 72px;
+  height: 72px;
+  background: linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%);
+  border-radius: 50%;
+  font-size: 2rem;
+  font-weight: 700;
+}
+
+/* ---------- Animations ---------- */
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes scan {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(196px); }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.6; transform: scale(1.2); }
+}
+
+/* ---------- Responsive ---------- */
+/* Login shows the QR card next to the form from 769px up (kept in sync with
+   DESKTOP_QUERY in Login.jsx). Below that it's a single column. */
+@media (min-width: 769px) {
+  .auth-layout--split {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: center;
+    max-width: 920px;
+  }
+}
+
+@media (max-width: 600px) {
+  .profile {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .card__header {
+    margin-bottom: 22px;
+  }
+}
+
+@media (max-width: 380px) {
+  .dashboard__header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .btn--auto {
+    width: 100%;
+  }
+}
+
+/* ---------- Accessibility ---------- */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.form-input:focus-visible {
+  outline: none; /* the focus ring is drawn by box-shadow above */
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  .spinner {
+    animation-duration: 1.5s !important;
+    animation-iteration-count: infinite !important;
+  }
 }

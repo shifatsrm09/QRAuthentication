@@ -1,120 +1,110 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import user_icon from "../Assets/person.png";
-import email_icon from "../Assets/email.png";
-import password_icon from "../Assets/password.png";
-import "./Signup.css";
+import AuthField from "./AuthField";
 import { signup } from "../services/authService";
+import { getErrorMessage } from "../services/client";
+import userIcon from "../Assets/person.png";
+import emailIcon from "../Assets/email.png";
+import passwordIcon from "../Assets/password.png";
 
 const Signup = () => {
+  const navigate = useNavigate();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-  const navigate = useNavigate();
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState("");
 
-  const handleSignup = async () => {
-    if (!name || !email || !password) {
-      alert("Please fill in all fields");
-      return;
-    }
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    if (submitting) return;
 
+    setSubmitting(true);
+    setError("");
     try {
-      setIsLoading(true);
-      await signup(name, email, password);
-      alert("Signup successful! Please log in.");
-      navigate("/login");
+      await signup(name.trim(), email.trim(), password);
+      navigate("/login", { replace: true, state: { registered: true } });
     } catch (err) {
-      alert(err.response?.data?.message || "Signup failed");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleKeyPress = (e) => {
-    if (e.key === 'Enter') {
-      handleSignup();
+      setError(getErrorMessage(err, "Signup failed. Please try again."));
+      setSubmitting(false);
     }
   };
 
   return (
-    <div className="login-container black-theme">
-      <div className="login-content">
-        <div className="login-form-section">
-          <div className="form-card">
-            <div className="form-header">
-              <h1>Create Account</h1>
-              <p>Join us and get started today</p>
-            </div>
+    <main className="page">
+      <div className="auth-layout">
+        <section className="card">
+          <header className="card__header">
+            <h1>Create Account</h1>
+            <p>Join us and get started today</p>
+          </header>
 
-            <div className="form-inputs">
-              <div className="input-group">
-                <div className="input-icon">
-                  <img src={user_icon} alt="user" />
-                </div>
-                <input
-                  type="text"
-                  placeholder="Full Name"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  onKeyPress={handleKeyPress}
-                  className="form-input"
-                />
-              </div>
+          <form className="form" onSubmit={handleSubmit}>
+            {error && (
+              <p className="message message--error" role="alert">
+                {error}
+              </p>
+            )}
 
-              <div className="input-group">
-                <div className="input-icon">
-                  <img src={email_icon} alt="email" />
-                </div>
-                <input
-                  type="email"
-                  placeholder="Email Address"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  onKeyPress={handleKeyPress}
-                  className="form-input"
-                />
-              </div>
+            <AuthField
+              icon={userIcon}
+              type="text"
+              name="name"
+              placeholder="Full Name"
+              aria-label="Full name"
+              autoComplete="name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              required
+            />
+            <AuthField
+              icon={emailIcon}
+              type="email"
+              name="email"
+              placeholder="Email Address"
+              aria-label="Email address"
+              autoComplete="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
+            <AuthField
+              icon={passwordIcon}
+              type="password"
+              name="password"
+              placeholder="Password"
+              aria-label="Password"
+              autoComplete="new-password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
 
-              <div className="input-group">
-                <div className="input-icon">
-                  <img src={password_icon} alt="password" />
-                </div>
-                <input
-                  type="password"
-                  placeholder="Password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  onKeyPress={handleKeyPress}
-                  className="form-input"
-                />
-              </div>
-            </div>
-
-            <button 
-              className="login-btn" 
-              onClick={handleSignup}
-              disabled={isLoading}
+            <button
+              className="btn btn--primary"
+              type="submit"
+              disabled={!name || !email || !password || submitting}
             >
-              {isLoading ? (
-                <div className="btn-loading">
-                  <div className="btn-spinner"></div>
-                  Creating Account...
-                </div>
+              {submitting ? (
+                <>
+                  <span className="spinner spinner--sm" aria-hidden="true" />
+                  Creating account…
+                </>
               ) : (
                 "Create Account"
               )}
             </button>
+          </form>
 
-            <div className="form-footer">
-              <p>
-                Already have an account? <Link to="/login" className="signup-link">Log in here</Link>
-              </p>
-            </div>
-          </div>
-        </div>
+          <p className="card__footer">
+            Already have an account?{" "}
+            <Link className="link" to="/login">
+              Log in here
+            </Link>
+          </p>
+        </section>
       </div>
-    </div>
+    </main>
   );
 };
 

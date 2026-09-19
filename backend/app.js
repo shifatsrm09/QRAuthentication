@@ -1,6 +1,12 @@
 const express = require("express");
 const cors = require("cors");
 const app = express();
+
+// Start connecting to MongoDB as soon as the process starts (locally: at boot, on Vercel: during
+// cold start), so DB-backed requests don't pay the full connection cost. Real errors still
+// surface on the requests that need the database.
+if (process.env.MONGO_URI) require("../lib/db")().catch(() => {});
+
 app.disable("x-powered-by");
 app.use(cors({ origin: process.env.FRONTEND_URL || false }));
 app.use((req, res, next) => {
