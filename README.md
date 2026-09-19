@@ -15,8 +15,8 @@ A **Create React App boilerplate for starting a new project with the login pipel
 ## Quick start
 
 ```bash
-git clone <your-repo-url>
-cd <your-repo>
+git clone https://github.com/shifatsrm09/QRAuth.git
+cd QRauth
 npm install
 cp .env.example .env        # Windows: copy .env.example .env
 ```
