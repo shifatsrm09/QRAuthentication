@@ -84,12 +84,12 @@ const Login = () => {
 
         const data = await checkQRStatus(qrData.sessionId);
         
-        if (data.authenticated && data.user) {
+        if (data.authenticated && data.user && data.token) {
           console.log("✅ QR authentication successful!");
           clearInterval(interval);
           
-          // Store auth data
-          localStorage.setItem("token", data.user.token || "QR_AUTHENTICATED");
+          // Store auth data (real JWT issued by /api/qr/status)
+          localStorage.setItem("token", data.token);
           localStorage.setItem("user", JSON.stringify(data.user));
           
           // Navigate to dashboard

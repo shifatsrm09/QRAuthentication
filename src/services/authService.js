@@ -1,7 +1,7 @@
 import axios from "axios";
 
-// Use environment variable with fallback
-const API_URL = process.env.REACT_APP_API_URL || "https://qr-frontend-4kwe.onrender.com/api";
+// Same-origin by default: the API lives at /api on the same Vercel deployment
+const API_URL = process.env.REACT_APP_API_URL || "/api";
 
 console.log("🔧 Auth Service - API URL:", `${API_URL}/auth`);
 

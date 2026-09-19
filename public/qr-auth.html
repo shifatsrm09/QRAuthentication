@@ -1,77 +1,150 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>QR Authentication</title>
-    <style>
-        body { 
-            background: #1a1a1a; 
-            color: white; 
-            text-align: center; 
-            padding: 50px; 
-            font-family: Arial; 
-        }
-        .container { max-width: 500px; margin: 0 auto; }
-        .btn { 
-            background: #007bff; 
-            color: white; 
-            border: none; 
-            padding: 15px 30px; 
-            border-radius: 5px; 
-            cursor: pointer; 
-            font-size: 16px; 
-            margin: 10px; 
-            text-decoration: none;
-            display: inline-block;
-        }
-    </style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Confirm Desktop Login</title>
+  <style>
+    body {
+      background: #1a1a1a;
+      color: white;
+      text-align: center;
+      padding: 50px 20px;
+      font-family: Arial, sans-serif;
+    }
+    .container { max-width: 420px; margin: 0 auto; }
+    .user-info {
+      background: #2a2a2a;
+      padding: 15px;
+      border-radius: 5px;
+      margin: 20px 0;
+      word-break: break-word;
+    }
+    .btn {
+      background: #007bff;
+      color: white;
+      border: none;
+      padding: 15px 30px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 16px;
+      margin: 10px;
+      text-decoration: none;
+      display: inline-block;
+    }
+    .btn:hover { background: #0056b3; }
+    .btn:disabled { opacity: 0.6; cursor: not-allowed; }
+    .ok { color: #4caf50; }
+    .err { color: #ff6b6b; }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <h2>Desktop Login</h2>
-        <div id="status">
-            <p>Processing your request...</p>
-        </div>
-    </div>
+  <div class="container">
+    <h2>Desktop Login</h2>
+    <div id="content"><p>Loading...</p></div>
+  </div>
 
-    <script>
-        // Get sessionId from URL
-        const urlParams = new URLSearchParams(window.location.search);
-        const sessionId = urlParams.get('sessionId');
-        
-        console.log("QR Auth Page - Session ID:", sessionId);
-        
-        // Check if user is logged in
-        const token = localStorage.getItem('token');
-        const user = localStorage.getItem('user');
-        
-        const statusDiv = document.getElementById('status');
-        
-        if (token && user && sessionId) {
-            console.log("✅ User is logged in, redirecting to backend...");
-            
-            const userData = JSON.parse(user);
-            statusDiv.innerHTML = `
-                <p>Logged in as: <strong>${userData.name || 'User'}</strong></p>
-                <p>${userData.email || ''}</p>
-                <p>Redirecting to confirm...</p>
-            `;
-            
-            // Redirect to backend with all data
-            const backendURL = 'https://qr-frontend-4kwe.onrender.com';
-            const redirectURL = `${backendURL}/api/qr/scan?sessionId=${sessionId}&token=${token}&user=${encodeURIComponent(user)}&email=${encodeURIComponent(userData.email || '')}&name=${encodeURIComponent(userData.name || '')}`;
-            
-            setTimeout(() => {
-                window.location.href = redirectURL;
-            }, 1000);
-            
-        } else {
-            console.log("❌ User not logged in or missing data");
-            statusDiv.innerHTML = `
-                <p style="color: red;">You are not logged in.</p>
-                <p>Please log in first, then scan the QR code again.</p>
-                <a href="/qr_frontend/login" class="btn">Go to Login</a>
-            `;
-        }
-    </script>
+  <script>
+    (function () {
+      var content = document.getElementById("content");
+      var sessionId = new URLSearchParams(window.location.search).get("sessionId");
+
+      function el(tag, text, className) {
+        var node = document.createElement(tag);
+        if (text !== undefined) node.textContent = text; // textContent => no HTML injection
+        if (className) node.className = className;
+        return node;
+      }
+
+      function show() {
+        content.replaceChildren.apply(content, arguments);
+      }
+
+      function loginLink() {
+        var a = el("a", "Go to Login", "btn");
+        a.href = "/#/login";
+        return a;
+      }
+
+      function readStorage(key) {
+        try { return localStorage.getItem(key); } catch (e) { return null; }
+      }
+
+      if (!sessionId) {
+        show(el("p", "Invalid QR code: missing session.", "err"));
+        return;
+      }
+
+      var token = readStorage("token");
+      var user = null;
+      try { user = JSON.parse(readStorage("user") || "null"); } catch (e) {}
+
+      if (!token || !user) {
+        show(
+          el("p", "You are not logged in on this device.", "err"),
+          el("p", "Log in first, then scan the QR code again."),
+          loginLink()
+        );
+        return;
+      }
+
+      var result = el("div");
+      result.style.marginTop = "20px";
+      var button = el("button", "Yes, Log Me In", "btn");
+
+      var info = el("div", undefined, "user-info");
+      info.appendChild(el("p", "You are logged in as:"));
+      info.appendChild(el("h3", user.name || "User"));
+      info.appendChild(el("p", user.email || ""));
+
+      button.addEventListener("click", function () {
+        button.disabled = true;
+        result.replaceChildren(el("p", "Confirming login..."));
+
+        fetch("/api/qr/confirm", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer " + token
+          },
+          body: JSON.stringify({ sessionId: sessionId })
+        })
+          .then(function (r) {
+            return r.json().catch(function () { return {}; }).then(function (data) {
+              return { ok: r.ok, status: r.status, data: data };
+            });
+          })
+          .then(function (res) {
+            if (res.ok) {
+              result.replaceChildren(
+                el("p", "Success! You can now return to your desktop.", "ok")
+              );
+            } else if (res.status === 401) {
+              result.replaceChildren(
+                el("p", "Your session on this device has expired. Please log in again.", "err"),
+                loginLink()
+              );
+            } else {
+              button.disabled = false;
+              result.replaceChildren(
+                el("p", (res.data && (res.data.msg || res.data.message)) || "Something went wrong.", "err")
+              );
+            }
+          })
+          .catch(function (e) {
+            button.disabled = false;
+            result.replaceChildren(el("p", "Network error: " + e.message, "err"));
+          });
+      });
+
+      show(
+        el("h3", "Confirm Desktop Login"),
+        info,
+        el("p", "Do you want to log in to your desktop with this account?"),
+        button,
+        result
+      );
+    })();
+  </script>
 </body>
 </html>

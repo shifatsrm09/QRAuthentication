@@ -1,50 +1,12 @@
-// server.js
-const express = require("express");
+const path = require("path");
 const dotenv = require("dotenv");
-const cors = require("cors");  
-const connectDB = require("./config/db");
-const QRSession = require("./models/QRSession"); // for index sync
-
-// Load environment variables
-dotenv.config();
-
-const app = express();
-
-// ✅ Middleware
-app.use(express.json());
-app.use(cors({
-  origin: process.env.FRONTEND_URL || "*", // Set to your frontend URL in production
-  credentials: true
-}));
-
-// ✅ Connect to MongoDB and sync indexes
-connectDB().then(async () => {
-  try {
-    await QRSession.syncIndexes(); // remove old unique indexes not in schema
-    console.log("✅ QRSession indexes synced");
-  } catch (err) {
-    console.error("❌ Failed to sync indexes:", err.message);
-  }
-}).catch(err => {
-  console.error("❌ Failed to connect to MongoDB:", err.message);
-});
-
-//UPTIME  health check
-app.get("/api/health", (req, res) => {
-  res.status(200).json({ status: "ok" });
-});
-
-// ✅ Routes - FIXED IMPORT
-app.use("/api/auth", require("./routes/authRoutes"));
-app.use("/api/qr", require("./routes/qrRoutes")); // ← CORRECT FILE NAME
-
-// ✅ Global error handler
-app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).json({ error: err.message });
-});
-
-// ✅ Start server (Render-ready)
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, "0.0.0.0", () => console.log(`🚀 Server running on port ${PORT}`));
-
+// Existing shell variables win; backend configuration takes precedence locally.
+for (const file of ["backend/.env.local", "backend/.env", ".env.local", ".env"]) {
+  dotenv.config({ path: path.resolve(__dirname, "..", file), quiet: true });
+}
+const app = require("./app");
+const port = process.env.API_PORT || process.env.PORT || 5000;
+if (require.main === module) {
+  app.listen(port, "0.0.0.0", () => console.log("API listening on port " + port));
+}
+module.exports = app;

@@ -1,12 +1,9 @@
 import axios from "axios";
 
-// Use environment variables with fallbacks
-const API_URL = process.env.REACT_APP_API_URL || "https://qr-frontend-4kwe.onrender.com/api";
-const QR_BASE_URL = process.env.REACT_APP_BACKEND_URL || "https://qr-frontend-4kwe.onrender.com";
+// Same-origin by default: the API lives at /api on the same Vercel deployment
+const API_URL = process.env.REACT_APP_API_URL || "/api";
 
-console.log("🔧 Environment Configuration:");
-console.log("- API URL:", API_URL);
-console.log("- Backend URL:", QR_BASE_URL);
+console.log("🔧 QR Service - API URL:", API_URL);
 
 // Create axios instance with configuration from env
 const apiClient = axios.create({
@@ -98,9 +95,8 @@ export const confirmQR = async (token, sessionId) => {
 
 // Get configuration from environment
 export const getConfig = () => ({
-  backendUrl: process.env.REACT_APP_BACKEND_URL,
-  frontendUrl: process.env.REACT_APP_FRONTEND_URL,
-  qrAuthPage: process.env.REACT_APP_QR_AUTH_PAGE,
+  apiUrl: API_URL,
+  qrAuthPage: process.env.REACT_APP_QR_AUTH_PAGE || "/qr-auth.html",
   pollingInterval: parseInt(process.env.REACT_APP_QR_POLLING_INTERVAL) || 3000,
   maxPolls: parseInt(process.env.REACT_APP_QR_MAX_POLLS) || 100,
   appName: process.env.REACT_APP_APP_NAME || 'QR Auth'
